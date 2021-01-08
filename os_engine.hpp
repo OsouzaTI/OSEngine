@@ -1,0 +1,86 @@
+#ifndef OSENGINE_H
+#define OSENGINE_H
+
+#include "display.h"
+#include "drawing.h"
+#include "keyboard.h"
+#include "osmath.hpp"
+#include "vector.hpp"
+
+class OSEngine
+{
+	public:
+		OSEngine();
+		~OSEngine();
+		bool game_loop;
+		SDL_Event keyboard_event;
+		Drawing draw;
+
+		// Cria a janela
+		void create_window(const char* title, int width, int height);
+		// Limpa o buffer de cor
+		inline void clear_screen() { this->display.clear_buffer(); }
+		// Atualiza o render
+		void update_render();
+		void frame_rate_control();
+		// Ler os eventos do teclado
+		inline void read_event() { SDL_PollEvent(&this->keyboard_event); };
+		// retorna o tipo de evento que foi disparado
+		inline Uint32 keyboard_event_type() { return this->keyboard_event.type; };
+		inline Uint32 keyboard_event_key() { return this->keyboard_event.key.keysym.sym; };
+
+		void set_frame_rate(int frame_rate);
+
+		int window_width();
+		int window_height();
+
+		// Metodos que serão sobrescritos pela classe filha
+		virtual void engine_main() {}; // a cabeça do jogo
+		virtual void update() {}; // o pré draw
+		virtual void render() {}; // o draw
+		virtual void process_input() {}; // processamento do teclado e etc
+
+	private:
+		Display display;
+};
+
+OSEngine::OSEngine(){
+	this->game_loop = false;
+	this->keyboard_event = SDL_Event();
+	this->draw.set_display(&this->display);
+}
+OSEngine::~OSEngine(){}
+
+void OSEngine::create_window(const char* title, int width, int height)
+{
+	this->game_loop = this->display.init_window(title, width, height);	
+	this->display.setup_window();
+}
+
+void OSEngine::update_render()
+{
+	this->display.draw_buffer();
+	this->display.sdl_render_present();
+}
+
+inline void OSEngine::frame_rate_control()
+{
+	this->display.frame_rate_control();
+}
+
+void OSEngine::set_frame_rate(int frame_rate)
+{
+	this->display.set_frame_rate(frame_rate);
+}
+
+int OSEngine::window_width()
+{
+	return this->display.width;
+}
+
+inline int OSEngine::window_height()
+{
+	return this->display.height;
+}
+
+#endif // !OSENGINE_H

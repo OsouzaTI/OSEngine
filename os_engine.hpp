@@ -4,8 +4,8 @@
 #include "display.h"
 #include "drawing.h"
 #include "keyboard.h"
-#include "osmath.hpp"
 #include "vector.hpp"
+#include "mesh.h"
 
 class OSEngine
 {
@@ -15,7 +15,7 @@ class OSEngine
 		bool game_loop;
 		SDL_Event keyboard_event;
 		Drawing draw;
-
+		Mesh mesh;
 		// Cria a janela
 		void create_window(const char* title, int width, int height);
 		// Limpa o buffer de cor
@@ -33,6 +33,8 @@ class OSEngine
 
 		int window_width();
 		int window_height();
+		Display* get_display();
+		void create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect = NULL);
 
 		// Metodos que serão sobrescritos pela classe filha
 		virtual void engine_main() {}; // a cabeça do jogo
@@ -81,6 +83,19 @@ int OSEngine::window_width()
 inline int OSEngine::window_height()
 {
 	return this->display.height;
+}
+
+inline Display* OSEngine::get_display()
+{
+	return &this->display;
+}
+
+void OSEngine::create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect)
+{
+	if (aspect != NULL)
+		this->display.create_camera(position, rotate, fov, znear, zfar, aspect);
+	else
+		this->display.create_camera(position, rotate, fov, znear, zfar);
 }
 
 #endif // !OSENGINE_H

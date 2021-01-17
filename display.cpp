@@ -91,6 +91,20 @@ void Display::clear_buffer()
 	}
 }
 
+void Display::create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect)
+{
+	float _aspect = static_cast<float>(this->height / this->width);
+	if (aspect != NULL) _aspect = aspect;
+	this->camera = {
+		position,
+		rotate,
+		fov,
+		znear,
+		zfar,
+		_aspect
+	};
+}
+
 uint32_t* Display::get_color_buffer()
 {
 	return this->color_buffer;

@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.12)
 project(OSEngine)
 
-set(Project "teste_polygon.cpp")
+set(Project "main.cpp")
 
-add_executable(OSEngine ${Project} "display.h" "display.cpp" "os_engine.hpp" "keyboard.h" "drawing.h" "drawing.cpp" "osmath.hpp" )
+add_executable(OSEngine ${Project} "display.h" "display.cpp" "os_engine.hpp" "keyboard.h" "drawing.h" "drawing.cpp" "osmath.hpp"  "mesh.h" "mesh.cpp")
 
 target_include_directories(OSEngine PRIVATE deps/SDL2/include)
 target_link_directories(OSEngine PRIVATE deps/SDL2/lib/x64)

@@ -1,10 +1,22 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
 #include <SDL2/SDL.h>
+#include "vector.hpp"
+
+typedef struct {
+	vect3<float> point;
+	vect3<float> rotate;
+	float fov;
+	float znear;
+	float zfar;
+	float aspect;
+} Camera;
 
 class Display
 {
 	public:
+		Camera camera;
+
 		// largura da janela em pixels
 		int width;
 		// altura da janela em pixels
@@ -29,6 +41,8 @@ class Display
 
 		// atualiza a tela apos as escritas
 		inline void sdl_render_present() { SDL_RenderPresent(this->renderer); };
+
+		void create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect = NULL);
 
 		// retorna a referencia do buffer de cor
 		uint32_t* get_color_buffer();

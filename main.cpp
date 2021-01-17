@@ -10,7 +10,7 @@ class Janela : public OSEngine
 		~Janela();
 		void engine_main() override;
 		void process_input() override;
-		//void update() override;
+		void update() override;
 		void render() override;
 	private:
 
@@ -20,11 +20,23 @@ Janela::Janela(){}
 Janela::~Janela(){}
 
 void Janela::engine_main() {
-	create_window("Janela", 400, 300);
+	create_window("Janela", 600, 600);
+	mesh.load_obj_file_data("F:\\Projects\\cpp\\OSEngine\\obj_files\\f22.obj");
+	mesh.set_display(get_display());
+
+	create_camera(
+		{0, 0, 0},
+		{0, 0 ,0},
+		60.0f,
+		0.1f,
+		100.0f
+	);
+
 	if (this->game_loop)
 		std::cout << "OPA\n";
 
 	while (this->game_loop) {
+		update();
 		render();
 		process_input();
 	}
@@ -53,12 +65,17 @@ void Janela::process_input()
 
 }
 
+void Janela::update()
+{
+	mesh.update_mesh();
+	frame_rate_control();
+}
+
 void Janela::render() {
 	clear_screen();
 
 	// Code
-	draw.draw_rect(10, 10, 100, 30, 1, 0xFFFFFF00);
-
+	mesh.draw_mesh(draw);
 	update_render();
 }
 

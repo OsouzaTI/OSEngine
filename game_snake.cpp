@@ -8,8 +8,8 @@
 
 #define LOG(x) std::cout << x << std::endl;
 #define GRID_SIZE 20
-#define WINDOW_WIDTH 600
-#define WINDOW_HEIGHT 600
+#define WINDOW_WIDTH 1000
+#define WINDOW_HEIGHT 1000
 
 struct SnakeBody
 {

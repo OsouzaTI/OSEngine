@@ -11,8 +11,14 @@
 namespace Math {
 
 
-	double map(float v, float a, float b, float x, float y) {
+	inline double map(float v, float a, float b, float x, float y) {
 		return x + ((y - x) / (b - a)) * (v - a);
+	}
+
+	inline void swap(int* a, int* b) {
+		int temp = *a;
+		*a = *b;
+		*b = temp;
 	}
 
 }

@@ -31,6 +31,12 @@ bool Display::init_window(const char* title, int width, int height)
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
 		std::cout << "Erro na inicialização do SDL\n";
+		success = false;
+	}
+
+	if (TTF_Init() == -1) {
+		std::cout << "Erro na inicialização do TTF_init\n";
+		success = false;
 	}
 
 	this->window = SDL_CreateWindow(
@@ -89,6 +95,11 @@ void Display::clear_buffer()
 			this->color_buffer[pixel(x, y)] = this->default_clear_color_buffer;
 		}
 	}
+}
+
+SDL_Renderer* Display::get_renderer()
+{
+	return this->renderer;
 }
 
 void Display::create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect)

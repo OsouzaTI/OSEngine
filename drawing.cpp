@@ -8,6 +8,11 @@ Drawing::Drawing() {
 }
 Drawing::~Drawing() {}
 
+Display* Drawing::get_display()
+{
+    return this->display;
+}
+
 int Drawing::pixel(int x, int y)
 {
 	return ((this->display->width * y) + x);

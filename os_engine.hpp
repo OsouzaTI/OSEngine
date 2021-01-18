@@ -20,9 +20,12 @@ class OSEngine
 		// Cria a janela
 		void create_window(const char* title, int width, int height);
 		// Limpa o buffer de cor
-		inline void clear_screen() { this->display.clear_buffer(); }
+		void clear_screen(); // this->display.clear_buffer();
+		// desenha o buffer
+		void draw_buffer();
 		// Atualiza o render
 		void update_render();
+		
 		void frame_rate_control();
 		// Ler os eventos do teclado
 		inline void read_event() { SDL_PollEvent(&this->keyboard_event); };
@@ -41,6 +44,7 @@ class OSEngine
 		virtual void engine_main() {}; // a cabeça do jogo
 		virtual void update() {}; // o pré draw
 		virtual void render() {}; // o draw
+		// virtual void GUI_render() {}; // render GUI -- ??
 		virtual void process_input() {}; // processamento do teclado e etc
 
 	private:
@@ -61,9 +65,18 @@ void OSEngine::create_window(const char* title, int width, int height)
 	this->display.setup_window();
 }
 
-void OSEngine::update_render()
+void OSEngine::clear_screen()
+{
+	this->display.clear_buffer();
+}
+
+void OSEngine::draw_buffer()
 {
 	this->display.draw_buffer();
+}
+
+void OSEngine::update_render()
+{	
 	this->display.sdl_render_present();
 }
 

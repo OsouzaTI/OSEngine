@@ -6,6 +6,9 @@
 #include "mouse.h"
 #include "osmath.hpp"
 
+#define logerr(x) std::cerr <<"[ERRO]: "<< x << std::endl
+#define logstd(x) std::cout <<"[LOG]: "<< x << std::endl
+
 class OSGui
 {
 	public:
@@ -147,6 +150,8 @@ class SliderRange : public OSGui
         SliderRange();
         ~SliderRange();
 
+        int get_value();
+
         void GUI_init(Drawing* draw, int x, int y, int size);
         void GUI_init(Drawing* draw, int min_value, int max_value, int x, int y, int size);
         void GUI_draw() override;
@@ -169,6 +174,11 @@ class SliderRange : public OSGui
 
 SliderRange::SliderRange(){}
 SliderRange::~SliderRange(){}
+
+int SliderRange::get_value()
+{
+    return this->value;
+}
 
 void SliderRange::GUI_init(Drawing* draw, int x, int y, int width)
 {
@@ -305,6 +315,66 @@ void SliderRange::GUI_poll_events()
         current_draggable_color = draggable_color;
     }
    
+}
+
+class TextLabel : public OSGui
+{
+public:
+    TextLabel();
+    ~TextLabel();
+
+    void GUI_init(Drawing* draw, const char* text, int x, int y, int size);
+    void GUI_draw() override;
+    // void GUI_poll_events() override;
+private:
+    int size;
+    char text[100];
+    TTF_Font* Sans;
+    SDL_Surface* surface_label;
+    SDL_Texture* message;
+
+    Display* display;
+    SDL_Renderer* renderer;
+};
+
+TextLabel::TextLabel(){}
+TextLabel::~TextLabel(){
+    SDL_FreeSurface(surface_label);
+    SDL_DestroyTexture(message);
+}
+
+void TextLabel::GUI_init(Drawing* draw, const char* text, int x, int y, int size)
+{
+    this->draw = draw;
+    strcpy(this->text, text);
+    std::cout << this->text << std::endl;
+    this->position = {x, y};
+    this->size = size;
+    this->Sans = TTF_OpenFont("F:\\Projects\\cpp\\OSEngine\\fonts\\aAbsoluteEmpire.ttf", this->size);
+    if (!this->Sans) {
+        logerr("Error open font TTF_OpenFont()");
+    }
+
+    this->display = draw->get_display();
+    this->renderer = this->display->get_renderer();
+    this->surface_label = NULL;
+    this->message = NULL;
+}
+
+void TextLabel::GUI_draw(){
+    
+    surface_label = TTF_RenderText_Blended(this->Sans, this->text, CS_RED);
+    message = SDL_CreateTextureFromSurface(renderer, surface_label);
+
+    SDL_Rect message_rect;
+    message_rect.x = this->position.x;
+    message_rect.y = this->position.y;
+    message_rect.w = strlen(this->text) * 10;
+    message_rect.h = 40;
+    if (SDL_RenderCopy(renderer, message, NULL, &message_rect) == -1) {
+        logerr("Erro mano");
+    }
+
 }
 
 

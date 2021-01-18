@@ -3,6 +3,9 @@
 
 #include "display.h"
 
+static SDL_Color CS_WHITE = { 255, 255, 255 };
+static SDL_Color CS_RED   = { 255, 0, 0 };
+
 enum COLORS {
 	C_WHITE = 0xFFFFFFFF, // white color hex
 	C_BLACK = 0xFF000000, // black color hex
@@ -37,8 +40,10 @@ class Drawing
 		Drawing();
 		~Drawing();
 
-		int pixel(int x, int y);
+		Display* get_display();
 		void set_display(Display* display);
+
+		int pixel(int x, int y);
 		void draw_pixel(int x, int y, uint32_t color);
 		void draw_rect(int x, int y, int w, int h, int border_size, uint32_t color);
 		void draw_fill_rect(int x, int y, int w, int h, uint32_t color);

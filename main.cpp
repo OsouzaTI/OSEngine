@@ -1,4 +1,4 @@
-#include <SDL2/SDL.h>
+#include <SDL.h>
 #include <iostream>
 
 #include "os_engine.hpp"
@@ -17,11 +17,12 @@ class Janela : public OSEngine
 		DraggableCircle dc1;
 		DraggableCircle dc2;
 		SliderRange sd;
+		TextLabel lb1;
 
 		void engine_main() override;
 		void process_input() override;
 		void update() override;
-		void render() override;
+		void render() override;			
 	private:
 
 };
@@ -30,12 +31,13 @@ Janela::Janela(){}
 Janela::~Janela(){}
 
 void Janela::engine_main() {
-	create_window("Janela", 600, 600);
+	create_window("Janela", 800, 600);
 
 	// inicializando GUI
 	dc1.GUI_init(&this->draw, 10, 10);
 	dc2.GUI_init(&this->draw, 100, 100);
 	sd.GUI_init(&this->draw, 10, 10, 300);
+	lb1.GUI_init(&this->draw, "Ozeias", 10, 200, 16);
 
 	create_camera(
 		{0, 0, 0},
@@ -49,9 +51,9 @@ void Janela::engine_main() {
 		std::cout << "OPA\n";
 
 	while (this->game_loop) {
-		update();
-		render();
 		process_input();
+		update();
+		render();				
 	}
 
 }
@@ -67,43 +69,7 @@ void Janela::process_input()
 			break;
 		case OS_KEYBOARD_TYPE::KEY_DOWN:
 			switch (keyboard_event_key())
-			{
-				case OS_KEYBOARD_KEY::BT_ARROW_UP:
-					mesh.set_rotate_mesh_z(RAD(angle_z));
-					break;
-				case OS_KEYBOARD_KEY::BT_ARROW_LEFT:
-					mesh.set_rotate_mesh_x(RAD(angle_x));
-					break;
-				case OS_KEYBOARD_KEY::BT_ARROW_RIGHT:
-					mesh.set_rotate_mesh_y(RAD(angle_y));
-					break;
-				case OS_KEYBOARD_KEY::BT_KEY_S:
-					angle_x++;
-					std::cout << "X: " << angle_x << std::endl;
-					break;
-				case OS_KEYBOARD_KEY::BT_KEY_D:
-					angle_x--;
-					std::cout << "X: " << angle_x << std::endl;
-					break;
-				case OS_KEYBOARD_KEY::BT_KEY_A:
-					angle_y++;
-					std::cout << "Y: " << angle_y << std::endl;
-					break;
-				case OS_KEYBOARD_KEY::BT_KEY_B:
-					angle_y--;
-					std::cout << "Y: " << angle_y << std::endl;
-					break;
-				case OS_KEYBOARD_KEY::BT_KEY_P:
-					angle_z++;
-					std::cout << "Z: " << angle_z << std::endl;
-					break;
-				case OS_KEYBOARD_KEY::BT_KEY_O:
-					angle_z--;
-					std::cout << "Z: " << angle_z << std::endl;
-					break;
-				default:
-					break;
-			}
+			{}
 		default:
 			break;
 	}
@@ -117,9 +83,19 @@ void Janela::update()
 
 void Janela::render() {
 	clear_screen();
-
+	
 	sd.GUI_draw();
+	
 
+	draw.draw_circle(this->window_width()/2, this->window_height()/2, sd.get_value(), C_RED);
+
+	draw_buffer();
+	// O TextLabel deve ser chamado apos os GUI que usam o draw buffer comumente
+	// ele utiliza textura diretamente copiadas acima do renderer
+	lb1.GUI_draw();
+
+	// por ultimo sempre se deve chamar o update para que apareça as
+	// coisa em sua tela
 	update_render();
 }
 

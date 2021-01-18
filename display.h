@@ -1,6 +1,7 @@
 #ifndef DISPLAY_H
 #define DISPLAY_H
-#include <SDL2/SDL.h>
+#include <SDL.h>
+#include <SDL_ttf.h>
 #include "vector.hpp"
 
 typedef struct {
@@ -38,6 +39,8 @@ class Display
 		void draw_buffer();
 		// limpa o buffer
 		void clear_buffer();
+
+		SDL_Renderer* get_renderer();
 
 		// atualiza a tela apos as escritas
 		inline void sdl_render_present() { SDL_RenderPresent(this->renderer); };

@@ -1,7 +1,7 @@
 #ifndef MOUSE_H
 #define MOUSE_H
 
-#include <SDL2/SDL.h>
+#include <SDL.h>
 
 enum OS_MOUSE_STATE {
 	MOUSE_DOWN = 1,

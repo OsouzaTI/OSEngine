@@ -63,18 +63,24 @@ void Mesh::load_obj_file_data(char* filename)
 	this->loaded = true;
 	std::cout << "Mesh Loaded" << std::endl;
 }
-
+int angle = 0.0f;
 void Mesh::update_mesh()
 {
+	if (angle > 360) angle = 0;
+	angle += 1;
+
 	mesh.scale.x = 5;
 	mesh.scale.y = 5;
 	mesh.scale.z = 5;
 	
-	mesh.translation.x = 10;
-	mesh.translation.y = 10;
+	mesh.translation.x = 15.0f;
+	mesh.translation.y = 15.0f;
 	mesh.translation.z = 30.0f;
 
 	Mat4x4 scale = Mat4x4_MakeScale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
+	Mat4x4 rotateY = Mat4x4_MakeRotationY(mesh.rotation.y);
+	Mat4x4 rotateX = Mat4x4_MakeRotationX(mesh.rotation.x);
+	Mat4x4 rotateZ = Mat4x4_MakeRotationZ(mesh.rotation.z);
 	Mat4x4 translation = Mat4x4_MakeTranslation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
 
 	Mat4x4 project_matrix = Mat4x4_MakePerspective(
@@ -104,6 +110,9 @@ void Mesh::update_mesh()
 			vect4<float> transformed_vertex = vec4_from_vec3(face_vertex[j]);
 			Mat4x4 world_matrix = Mat4x4_MakeIdentity();
 			world_matrix = Mat4x4_MultiplyMatrix(scale, world_matrix);
+			world_matrix = Mat4x4_MultiplyMatrix(rotateY, world_matrix);
+			world_matrix = Mat4x4_MultiplyMatrix(rotateX, world_matrix);
+			world_matrix = Mat4x4_MultiplyMatrix(rotateZ, world_matrix);
 			world_matrix = Mat4x4_MultiplyMatrix(translation, world_matrix);
 			transformed_vertex = Mat4x4_MultiplyVector(world_matrix, transformed_vertex);
 			transformed_vertices[j] = transformed_vertex;
@@ -157,4 +166,19 @@ void Mesh::draw_mesh(Drawing &draw)
 void Mesh::set_display(Display* display)
 {
 	this->display = display;
+}
+
+void Mesh::set_rotate_mesh_x(float angle_x)
+{
+	this->mesh.rotation.x = angle_x;
+}
+
+void Mesh::set_rotate_mesh_y(float angle_y)
+{
+	this->mesh.rotation.y = angle_y;
+}
+
+void Mesh::set_rotate_mesh_z(float angle_z)
+{
+	this->mesh.rotation.z = angle_z;
 }

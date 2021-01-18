@@ -44,7 +44,9 @@ class Mesh
         void draw_mesh(Drawing& draw);
 
         void set_display(Display* display);
-
+        void set_rotate_mesh_x(float angle_x);
+        void set_rotate_mesh_y(float angle_y);
+        void set_rotate_mesh_z(float angle_z);
     private:        
         Display* display;
 };

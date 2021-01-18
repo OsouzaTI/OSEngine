@@ -2,12 +2,22 @@
 #include <iostream>
 
 #include "os_engine.hpp"
+#include "osmath.hpp"
 
 class Janela : public OSEngine
 {
 	public:
 		Janela();
 		~Janela();
+		float fov = 60.0f;	
+		int angle_x = 0;
+		int angle_y = 0;
+		int angle_z = 0;
+
+		DraggableCircle dc1;
+		DraggableCircle dc2;
+		SliderRange sd;
+
 		void engine_main() override;
 		void process_input() override;
 		void update() override;
@@ -21,8 +31,11 @@ Janela::~Janela(){}
 
 void Janela::engine_main() {
 	create_window("Janela", 600, 600);
-	mesh.load_obj_file_data("F:\\Projects\\cpp\\OSEngine\\obj_files\\f22.obj");
-	mesh.set_display(get_display());
+
+	// inicializando GUI
+	dc1.GUI_init(&this->draw, 10, 10);
+	dc2.GUI_init(&this->draw, 100, 100);
+	sd.GUI_init(&this->draw, 10, 10, 300);
 
 	create_camera(
 		{0, 0, 0},
@@ -45,6 +58,7 @@ void Janela::engine_main() {
 
 void Janela::process_input()
 {
+
 	read_event();	
 	switch (keyboard_event_type())
 	{
@@ -55,7 +69,38 @@ void Janela::process_input()
 			switch (keyboard_event_key())
 			{
 				case OS_KEYBOARD_KEY::BT_ARROW_UP:
-					std::cout << "UP\n";
+					mesh.set_rotate_mesh_z(RAD(angle_z));
+					break;
+				case OS_KEYBOARD_KEY::BT_ARROW_LEFT:
+					mesh.set_rotate_mesh_x(RAD(angle_x));
+					break;
+				case OS_KEYBOARD_KEY::BT_ARROW_RIGHT:
+					mesh.set_rotate_mesh_y(RAD(angle_y));
+					break;
+				case OS_KEYBOARD_KEY::BT_KEY_S:
+					angle_x++;
+					std::cout << "X: " << angle_x << std::endl;
+					break;
+				case OS_KEYBOARD_KEY::BT_KEY_D:
+					angle_x--;
+					std::cout << "X: " << angle_x << std::endl;
+					break;
+				case OS_KEYBOARD_KEY::BT_KEY_A:
+					angle_y++;
+					std::cout << "Y: " << angle_y << std::endl;
+					break;
+				case OS_KEYBOARD_KEY::BT_KEY_B:
+					angle_y--;
+					std::cout << "Y: " << angle_y << std::endl;
+					break;
+				case OS_KEYBOARD_KEY::BT_KEY_P:
+					angle_z++;
+					std::cout << "Z: " << angle_z << std::endl;
+					break;
+				case OS_KEYBOARD_KEY::BT_KEY_O:
+					angle_z--;
+					std::cout << "Z: " << angle_z << std::endl;
+					break;
 				default:
 					break;
 			}
@@ -67,15 +112,14 @@ void Janela::process_input()
 
 void Janela::update()
 {
-	mesh.update_mesh();
 	frame_rate_control();
 }
 
 void Janela::render() {
 	clear_screen();
 
-	// Code
-	mesh.draw_mesh(draw);
+	sd.GUI_draw();
+
 	update_render();
 }
 

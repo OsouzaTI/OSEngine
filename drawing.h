@@ -13,8 +13,23 @@ enum COLORS {
 	C_YELLOW = 0xFFFFFF00, // yellow color hex
 	C_PINK_CLEAN = 0xFFF00640, // yellow color hex
 	C_PINK = 0xd61195, // pink color hex
-	C_IMAGINARY_AXIOS = 0xFFFAB18E, // white 100-alpha
+	C_IMAGINARY_AXIOS = 0xFFFAB18E, // white 100-alpha,
+	C_MIDNIGHT = 0xFF5b1865,
+	C_TYRIAN_PURPLE = 0xFF470024,
+	C_TYRIAN_BLUE = 0xFF390099,
+	C_JAZZBERRY_JAM = 0xFF9e0059,
+	C_MEXICAN_PINK = 0xFFe0007f,
 };
+
+typedef struct 
+{
+	int a;
+	int b;
+	int c;
+	int s;
+	int ymax;
+	int ymin;
+} ImplicitLine;
 
 class Drawing
 {
@@ -37,6 +52,11 @@ class Drawing
 		void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
 		void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
 		void draw_fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
+
+		// Implicit lines
+		ImplicitLine implicit_line(int x1, int y1, int x2, int y2);
+		int implicit_line_winding_number(ImplicitLine implicit_line, int x, int y);
+		void draw_implicit_line(int x1, int y1, int x2, int y2, uint32_t color);
 	private:
 		Display* display;
 };

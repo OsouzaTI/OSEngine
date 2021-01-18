@@ -2,6 +2,13 @@
 #define MATRIX_H
 
 /*
+ __  __       _        _
+ |  \/  |     | |      (_)
+ | \  / | __ _| |_ _ __ ___  __
+ | |\/| |/ _` | __| '__| \ \/ /
+ | |  | | (_| | |_| |  | |>  <
+ |_|  |_|\__,_|\__|_|  |_/_/\_\
+
 This lib contains all functions of vectors transformations
 version: 0.1f
 author: ozéias s. souza

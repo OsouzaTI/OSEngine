@@ -15,6 +15,12 @@ enum OS_KEYBOARD_KEY {
 	BT_ARROW_UP = SDLK_UP,
 	BT_ARROW_DOWN = SDLK_DOWN,
 	BT_KEY_P = SDLK_p,
+	BT_KEY_O = SDLK_o,
+	BT_KEY_S = SDLK_s,
+	BT_KEY_D = SDLK_d,
+	BT_KEY_A = SDLK_a,
+	BT_KEY_B = SDLK_b,
 };
+
 
 #endif // !KEYBOARD_H

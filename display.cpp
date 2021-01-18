@@ -105,6 +105,11 @@ void Display::create_camera(vect3<float> position, vect3<float> rotate, float fo
 	};
 }
 
+void Display::set_camera_fov(float fov)
+{
+	this->camera.fov = fov;
+}
+
 uint32_t* Display::get_color_buffer()
 {
 	return this->color_buffer;

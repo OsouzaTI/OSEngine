@@ -21,6 +21,31 @@ namespace Math {
 		*b = temp;
 	}
 
+	template<typename T>
+	inline int sign(T a) {
+		if (a < 0) {
+			return -1;
+		}
+		else if (a > 0) {
+			return 1;
+		}
+		return 0;
+	}
+
+	template<typename T>
+	inline int max(T a, T b) {
+		if (a > b) return a;
+		else return b;
+		return a;
+	}
+
+	template<typename T>
+	inline int min(T a, T b) {
+		if (a < b) return a;
+		else return b;
+		return a;
+	}
+
 }
 
 #endif // !OSMATH_H

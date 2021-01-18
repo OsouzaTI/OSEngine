@@ -3,7 +3,7 @@ project(OSEngine)
 
 set(Project "main.cpp")
 
-add_executable(OSEngine ${Project} "display.h" "display.cpp" "os_engine.hpp" "keyboard.h" "drawing.h" "drawing.cpp" "osmath.hpp"  "mesh.h" "mesh.cpp")
+add_executable(OSEngine ${Project} "display.h" "display.cpp" "os_engine.hpp" "keyboard.h" "drawing.h" "drawing.cpp" "osmath.hpp"  "mesh.h" "mesh.cpp" "osgui.hpp"  "mouse.h")
 
 target_include_directories(OSEngine PRIVATE deps/SDL2/include)
 target_link_directories(OSEngine PRIVATE deps/SDL2/lib/x64)

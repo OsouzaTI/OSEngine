@@ -43,6 +43,7 @@ class Display
 		inline void sdl_render_present() { SDL_RenderPresent(this->renderer); };
 
 		void create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect = NULL);
+		void set_camera_fov(float fov);
 
 		// retorna a referencia do buffer de cor
 		uint32_t* get_color_buffer();

@@ -3,6 +3,7 @@
 
 #include "display.h"
 #include "drawing.h"
+#include "osgui.hpp"
 #include "keyboard.h"
 #include "vector.hpp"
 #include "mesh.h"
@@ -14,7 +15,7 @@ class OSEngine
 		~OSEngine();
 		bool game_loop;
 		SDL_Event keyboard_event;
-		Drawing draw;
+		Drawing draw;		
 		Mesh mesh;
 		// Cria a janela
 		void create_window(const char* title, int width, int height);
@@ -35,7 +36,7 @@ class OSEngine
 		int window_height();
 		Display* get_display();
 		void create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect = NULL);
-
+		void set_camera_fov(float fov);
 		// Metodos que serão sobrescritos pela classe filha
 		virtual void engine_main() {}; // a cabeça do jogo
 		virtual void update() {}; // o pré draw
@@ -51,6 +52,7 @@ OSEngine::OSEngine(){
 	this->keyboard_event = SDL_Event();
 	this->draw.set_display(&this->display);
 }
+
 OSEngine::~OSEngine(){}
 
 void OSEngine::create_window(const char* title, int width, int height)
@@ -96,6 +98,11 @@ void OSEngine::create_camera(vect3<float> position, vect3<float> rotate, float f
 		this->display.create_camera(position, rotate, fov, znear, zfar, aspect);
 	else
 		this->display.create_camera(position, rotate, fov, znear, zfar);
+}
+
+void OSEngine::set_camera_fov(float fov)
+{
+	this->display.set_camera_fov(fov);
 }
 
 #endif // !OSENGINE_H

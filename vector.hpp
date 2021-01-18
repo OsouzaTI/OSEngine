@@ -13,6 +13,14 @@
 	License: MIT
 */
 
+/*
+__      __       _                   ___  _____
+ \ \    / /      | |                 |__ \|  __ \
+  \ \  / /__  ___| |_ ___  _ __ ___     ) | |  | |
+   \ \/ / _ \/ __| __/ _ \| '__/ __|   / /| |  | |
+	\  /  __/ (__| || (_) | |  \__ \  / /_| |__| |
+	 \/ \___|\___|\__\___/|_|  |___/ |____|_____/
+*/
 
 template<typename T>
 struct vect2 {
@@ -25,6 +33,21 @@ struct vect2 {
 		this->y = y;
 	}
 
+} ;
+
+template<typename T>
+struct vect3 {
+	T x;
+	T y;
+	T z;
+} ;
+
+template<typename T>
+struct vect4 {
+	T x;
+	T y;
+	T z;
+	T w;
 } ;
 
 template<typename T>
@@ -65,20 +88,6 @@ vect2<T> operator*(T s, const vect2<T> u) {
 	};
 }
 
-template<typename T>
-struct vect3 {
-	T x;
-	T y;
-	T z;
-} ;
-
-template<typename T>
-struct vect4 {
-	T x;
-	T y;
-	T z;
-	T w;
-} ;
 
 
 template<typename T> vect2<T> smultvect(vect2<T> &u, T s) {
@@ -120,14 +129,25 @@ template<typename T> float vlenght(vect2<T> &u) {
 	return sqrtf(u.x * u.x + u.y * u.y);
 }
 
+template<typename T> float distance_to_point(vect2<T> &u, vect2<T> &v) {
+	float a = powf(v.x - u.x, 2.0f);
+	float b = powf(v.y - u.y, 2.0f);
+	return sqrtf(a + b);
+}
+
 template<typename T> void vnormalize(vect2<T>* u) {
 	float lenght = vlenght(*u);
 	u->x /= lenght;
 	u->y /= lenght;
 }
 
-
 /*
+__      __       _                   ____  _____
+ \ \    / /      | |                 |___ \|  __ \
+  \ \  / /__  ___| |_ ___  _ __ ___    __) | |  | |
+   \ \/ / _ \/ __| __/ _ \| '__/ __|  |__ <| |  | |
+	\  /  __/ (__| || (_) | |  \__ \  ___) | |__| |
+	 \/ \___|\___|\__\___/|_|  |___/ |____/|_____/
 ====================================================================
 
 	Abaixo estão as funções de operações com vetores
@@ -276,6 +296,15 @@ template<typename T> vect3<T> vec3_from_vec4(vect4<T> &u) {
 		u.z
 	};
 }
+
+/*
+__      __       _                   _  _   _____
+ \ \    / /      | |                 | || | |  __ \
+  \ \  / /__  ___| |_ ___  _ __ ___  | || |_| |  | |
+   \ \/ / _ \/ __| __/ _ \| '__/ __| |__   _| |  | |
+	\  /  __/ (__| || (_) | |  \__ \    | | | |__| |
+	 \/ \___|\___|\__\___/|_|  |___/    |_| |_____/
+*/
 
 // vec4
 template<typename T> vect4<T> vec4_from_vec3(vect3<T>& u) {

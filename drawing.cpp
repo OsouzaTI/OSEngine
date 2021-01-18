@@ -2,6 +2,7 @@
 #include "osmath.hpp"
 #include <iostream>
 
+
 Drawing::Drawing() {
 	this->display = NULL;
 }
@@ -19,11 +20,10 @@ void Drawing::set_display(Display* display)
 
 void Drawing::draw_pixel(int x, int y, uint32_t color)
 {
-    if (x > this->display->width || x < 0 || y > this->display->height || y < 0)
-        return;
-
-    uint32_t* color_buffer = this->display->get_color_buffer();
-    color_buffer[pixel(x, y)] = color;
+    if (x >= 0 && x < this->display->width && y >= 0 && y < this->display->height) {         
+        uint32_t* color_buffer = this->display->get_color_buffer();
+        color_buffer[pixel(x, y)] = color;
+    }        
 }
 
 void Drawing::draw_rect(int x, int y, int w, int h, int border_size, uint32_t color) {
@@ -248,5 +248,45 @@ void Drawing::draw_fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
         // Draw flat-top triangle
         fill_flat_top_triangle(x1, y1, Mx, My, x2, y2, color);
 
+    }
+}
+
+ImplicitLine Drawing::implicit_line(int x1, int y1, int x2, int y2)
+{
+    int a = y2 - y1;
+    int b = x1 - x2;
+    int c = -(a * x1 + b * y1);
+    int s = Math::sign<int>(a);
+    ImplicitLine _implicit_line{
+        a * s,
+        b * s,
+        c * s,
+        s,
+        Math::max<int>(y1, y2),
+        Math::min<int>(y1, y2)
+    };
+
+    return _implicit_line;
+}
+
+int Drawing::implicit_line_winding_number(ImplicitLine implicit_line, int x, int y)
+{
+    bool condicion = y > implicit_line.ymin && y <= implicit_line.ymax &&
+        implicit_line.a * x + implicit_line.b * y + implicit_line.c < 0;
+
+    if (condicion)return implicit_line.s;
+    return 0;
+}
+
+void Drawing::draw_implicit_line(int x1, int y1, int x2, int y2, uint32_t color)
+{
+    ImplicitLine _implicit_line = implicit_line(x1, y1, x2, y2);
+    for (int x = 0; x < this->display->width; x++)
+    {
+        for (int y = 0; y < this->display->height; y++)
+        {
+            int sum_implicit_line = implicit_line_winding_number(_implicit_line, x, y);
+            if (sum_implicit_line == 0) draw_pixel(x, y, color);
+        }
     }
 }

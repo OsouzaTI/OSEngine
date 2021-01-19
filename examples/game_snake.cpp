@@ -1,5 +1,5 @@
 #include <iostream>
-#include "os_engine.hpp"
+#include "../os_engine.hpp"
 #include <vector>
 #include <cstdint>
 #include <memory>
@@ -219,6 +219,7 @@ void SnakeGame::render()
 
 	SnakeUpdate();
 
+	draw_buffer();
 	update_render();
 }
 

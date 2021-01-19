@@ -1,6 +1,6 @@
 #include <SDL.h>
 #include <iostream>
-
+#include <string>
 #include "os_engine.hpp"
 #include "osmath.hpp"
 
@@ -13,11 +13,12 @@ class Janela : public OSEngine
 		int angle_x = 0;
 		int angle_y = 0;
 		int angle_z = 0;
-
+		int teste_counter = 0;
 		DraggableCircle dc1;
 		DraggableCircle dc2;
 		SliderRange sd;
 		TextLabel lb1;
+		AreaLogger logger;
 
 		void engine_main() override;
 		void process_input() override;
@@ -38,6 +39,13 @@ void Janela::engine_main() {
 	dc2.GUI_init(&this->draw, 100, 100);
 	sd.GUI_init(&this->draw, 10, 10, 300);
 	lb1.GUI_init(&this->draw, "Ozeias", 10, 200, 16);
+	logger.GUI_init(&this->draw, 0, -(250-window_height()), window_width(), 250);
+	logger.set_logger_view(true);
+	for (int i = 0; i < 100; i++)
+	{
+		std::string texto = std::string("Numero ") + std::to_string(i);
+		logger.add_log(texto.c_str());
+	}
 
 	create_camera(
 		{0, 0, 0},
@@ -79,23 +87,18 @@ void Janela::process_input()
 void Janela::update()
 {
 	frame_rate_control();
+	if (teste_counter++ > 500) {
+		teste_counter = 0;
+	}		
+	
+	SDL_GetMouseState(&position_mouse_x, &position_mouse_y);	
+	logger.add_log(STRLOG("Mouse X: ")+NSTR(position_mouse_x)+STR(" Mouse Y: ")+NSTR(position_mouse_y));
+	
 }
 
 void Janela::render() {
-	clear_screen();
-	
-	sd.GUI_draw();
-	
-
-	draw.draw_circle(this->window_width()/2, this->window_height()/2, sd.get_value(), C_RED);
-
-	draw_buffer();
-	// O TextLabel deve ser chamado apos os GUI que usam o draw buffer comumente
-	// ele utiliza textura diretamente copiadas acima do renderer
-	lb1.GUI_draw();
-
-	// por ultimo sempre se deve chamar o update para que apareça as
-	// coisa em sua tela
+	clear_screen();	
+	logger.GUI_draw();
 	update_render();
 }
 

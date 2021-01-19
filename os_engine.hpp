@@ -1,12 +1,22 @@
 #ifndef OSENGINE_H
 #define OSENGINE_H
-
 #include "display.h"
 #include "drawing.h"
 #include "osgui.hpp"
 #include "keyboard.h"
 #include "vector.hpp"
 #include "mesh.h"
+#include <string.h>
+
+#define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
+
+//std::string("[")+std::string(__TIME__)+std::string("]::")+
+
+#define LOG(x) std::cout <<"["<< __TIME__ <<"]::" <<"["<< __FILE__ <<"] -> " << x << std::endl;
+#define INIT_LOG std::string("[")+std::string(__FILENAME__)+std::string("] -> ")
+#define STRLOG(x)	INIT_LOG + std::string(x)
+#define STR(x)	std::string(x)
+#define NSTR(x)	std::to_string(x)
 
 class OSEngine
 {
@@ -14,6 +24,8 @@ class OSEngine
 		OSEngine();
 		~OSEngine();
 		bool game_loop;
+		int position_mouse_x;
+		int position_mouse_y;
 		SDL_Event keyboard_event;
 		Drawing draw;		
 		Mesh mesh;
@@ -78,6 +90,7 @@ void OSEngine::draw_buffer()
 void OSEngine::update_render()
 {	
 	this->display.sdl_render_present();
+	this->display.draw_buffer();
 }
 
 inline void OSEngine::frame_rate_control()

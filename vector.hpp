@@ -65,6 +65,15 @@ vect2<T> operator+(const vect2<T> u, const vect2<T> v) {
 }
 
 template<typename T>
+vect3<T> operator+(const vect3<T> u, const vect3<T> v) {
+	return vect3<T>{
+		u.x + v.x,
+		u.y + v.y,
+		u.z + v.z,
+	};
+}
+
+template<typename T>
 vect2<T> operator-(const vect2<T> u, const vect2<T> v) {
 	return vect2<T>{
 		u.x - v.x,

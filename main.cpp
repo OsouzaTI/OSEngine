@@ -11,8 +11,9 @@ class Janela : public OSEngine
 		int angle_z = 0;
 		int teste_counter = 0;
 
-		AreaLogger logger;
-		Ellipse elipse;
+		AreaLogger logger;		
+		Ellipse elipse;		
+		OSFont font;
 
 		void engine_main() override;
 		void process_input() override;
@@ -27,16 +28,17 @@ Janela::Janela(){
 		{ 100, 100, 0 },
 		{ 1, 1, 1 },
 		{ 0, 0, 0 },
-		5.0f
+		50.0f
 	);
 }
 Janela::~Janela(){}
 
 void Janela::engine_main() {
 	create_window("Janela", 800, 600);
+	this->font.open_font("F:\\Projects\\cpp\\OSEngine\\fonts\\aAbsoluteEmpire.ttf", 12);
 
 	// inicializando GUI
-	logger.GUI_init(0, -(250-window_height()), window_width(), 250);
+	logger.GUI_init(0, -(250-window_height()), window_width(), 250, this->font);
 	logger.lock_view_end(true);
 
 	create_camera(

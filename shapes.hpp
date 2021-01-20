@@ -4,6 +4,7 @@
 #include "matrix.hpp"
 #include "vector.hpp"
 #include "drawing.h"
+#include "osgui.hpp"
 
 class Shape
 {
@@ -37,6 +38,7 @@ class Ellipse : public Shape
 
 	private:
 		float radius;
+		DraggableCircle center;
 };
 
 Ellipse::Ellipse(){}
@@ -47,40 +49,46 @@ Ellipse::Ellipse(vect3<float> position, vect3<float> scale, vect3<float> rotatio
 	this->scale = scale;
 	this->rotation = rotation;
 	this->radius = radius;
-
-	Mat4x4 position_matrix = Mat4x4_MakeTranslation(this->position.x, this->position.y, this->position.z);
-	Mat4x4 scale_matrix = Mat4x4_MakeScale(this->scale.x * radius, this->scale.y * radius, this->scale.z * radius);
-	Mat4x4 rotation_x_matrix = Mat4x4_MakeRotationX(this->rotation.x);
-	Mat4x4 rotation_y_matrix = Mat4x4_MakeRotationY(this->rotation.y);
-	Mat4x4 rotation_z_matrix = Mat4x4_MakeRotationZ(this->rotation.z);
-	this->transformations = Mat4x4_MakeIdentity();
-	this->transformations = Mat4x4_MultiplyMatrix(scale_matrix, this->transformations);
-	this->transformations = Mat4x4_MultiplyMatrix(rotation_x_matrix, this->transformations);
-	this->transformations = Mat4x4_MultiplyMatrix(rotation_y_matrix, this->transformations);
-	this->transformations = Mat4x4_MultiplyMatrix(rotation_z_matrix, this->transformations);
-	this->transformations = Mat4x4_MultiplyMatrix(position_matrix, this->transformations);
+	this->center.GUI_init(this->position.x, this->position.y);
+	this->transformations = { {
+		{1, 0,  0, 0},
+		{0, 1,  0, 0},
+		{0, 0, -1, 0},
+		{0, 0,	0, 1},
+	} };
 }
 Ellipse::~Ellipse(){}
 
 void Ellipse::draw()
 {
-	int width = this->shapedraw->get_display()->width;
-	int height = this->shapedraw->get_display()->height;
-	for (int x = 0; x < width; x++)
+	// events of GUI
+	this->center.poll_events();
+
+	int cx = this->center.get_position().x;
+	int cy = this->center.get_position().y;
+	
+	Mat4x4 worldM = Mat4x4_MakeIdentity();	
+	Mat4x4 scaleM = Mat4x4_MakeScale(this->scale.x * this->radius, this->scale.y * this->radius, 1);
+	worldM = Mat4x4_MultiplyMatrix(this->transformations, worldM);
+	worldM = Mat4x4_MultiplyMatrix(scaleM, worldM);
+
+	for (float x = -1; x < 1; x += 0.01)
 	{
-		for (int y = 0; y < height; y++)
+		for (float y = -1; y < 1; y += 0.01)
 		{
 
-			bool condicion = powf(x, 2.0f) + powf(y, 2.0f) < powf(this->radius, 2.0f);
-			if (condicion) {
-				vect4<float> P{ x, y, 10, 1 };
-				P = Mat4x4_MultiplyVector(this->transformations, P);
-
-				shapedraw->draw_pixel(P.x, P.y, C_RED);
+			bool equation = powf(x, 2.0f) + powf(y, 2.0f) < 1;
+			if (equation) {
+				vect4<float> P{ x, y, 1, 1 };
+				P = Mat4x4_MultiplyVector(worldM, P);
+				this->shapedraw->draw_pixel(cx + P.x, cy + P.y, C_GREEN);
 			}
 
 		}
+
 	}
+
+	this->center.draw();
 }
 
 

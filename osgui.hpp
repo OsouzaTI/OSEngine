@@ -44,6 +44,48 @@ class OSGui
 
 Drawing* OSGui::guidraw = NULL;
 
+
+
+class OSFont
+{
+    public:
+        OSFont();
+        inline OSFont(const char* name, int size){
+            this->font = OSFont::get_font(name, size);
+        };
+
+        ~OSFont();
+        static TTF_Font* get_font(const char* name, int size);
+        void open_font(const char* name, int size);
+        TTF_Font* get_font();
+    private:
+        TTF_Font* font;
+};
+
+OSFont::OSFont(){}
+OSFont::~OSFont(){}
+
+TTF_Font* OSFont::get_font(const char* name, int size)
+{
+    TTF_Font* _font = TTF_OpenFont(name, size);
+    if (!_font) {
+        logerr("Error open font TTF_OpenFont()");
+        return NULL;
+    };
+    return _font;
+}
+
+void OSFont::open_font(const char* name, int size)
+{
+    this->font = OSFont::get_font(name, size);
+}
+
+TTF_Font* OSFont::get_font()
+{
+    return this->font;
+}
+
+
 /*
   _____                              _     _         _____ _          _
  |  __ \                            | |   | |       / ____(_)        | |
@@ -66,6 +108,7 @@ class DraggableCircle : public OSGui
 	    void poll_events() override;
     private:
         int size = 10;
+        int offsize = 1;
 
 };
 
@@ -83,7 +126,7 @@ void DraggableCircle::draw()
 {
     poll_events();
 
-    guidraw->draw_line(position.x, position.y, mouse_coordinates.x, mouse_coordinates.y, C_BLUE);
+    //guidraw->draw_line(position.x, position.y, mouse_coordinates.x, mouse_coordinates.y, C_BLUE);
 
     // draw circle
     guidraw->draw_circle(position.x, position.y, size, color);
@@ -98,7 +141,10 @@ void DraggableCircle::poll_events()
     // distance to mouse
     float dist = distance_to_point<int>(mouse_coordinates, position);
 
-    if (dist <= size + 1)
+    if (this->mouse == OS_MOUSE_STATE::MOUSE_DOWN) { this->offsize = this->size; }
+    else { this->offsize = 1; };
+
+    if (dist <= size + this->offsize)
     {
         SDL_PollEvent(&gui_events);
         switch (gui_events.type)
@@ -292,8 +338,7 @@ void SliderRange::poll_events()
                         int range_max_x = ((position.x + width) - draggable_width) - border;
                         int _value = draggable.x;
                         value = static_cast<int>(Math::map(_value, range_min_x, range_max_x, min_value, max_value));
-                        value = Math::max(value, 0);
-                        std::cout << value << std::endl;
+                        value = Math::max(value, 0);                        
 
                         // flicker draggable fix
                         if(direction != 0)
@@ -333,15 +378,16 @@ public:
     ~TextLabel();
 
     void set_position(int x, int y);
-    void set_text(const char* text);
+    void set_text(const char* text);    
 
-    void GUI_init(const char* text, int x, int y, int size);
+    void GUI_init(OSFont* font, const char* text, int x, int y, int size);
     void draw() override;
     // void poll_events() override;
+    void free_resources();
 private:
     int size;
     char text[100];
-    TTF_Font* Sans;
+    OSFont* font;
     SDL_Surface* surface_label;
     SDL_Texture* message;
 
@@ -349,8 +395,15 @@ private:
     SDL_Renderer* renderer;
 };
 
-TextLabel::TextLabel(){}
-TextLabel::~TextLabel(){}
+TextLabel::TextLabel(){
+    this->font = NULL;
+    this->surface_label = NULL;
+    this->message = NULL;
+}
+
+TextLabel::~TextLabel(){
+    
+}
 
 void TextLabel::set_position(int x, int y)
 {
@@ -362,16 +415,12 @@ void TextLabel::set_text(const char* text)
     strcpy(this->text, text);
 }
 
-void TextLabel::GUI_init(const char* text, int x, int y, int size)
+void TextLabel::GUI_init(OSFont* font, const char* text, int x, int y, int size)
 {
     strcpy(this->text, text);    
     this->position = {x, y};
     this->size = size;
-    this->Sans = TTF_OpenFont("F:\\Projects\\cpp\\OSEngine\\fonts\\aAbsoluteEmpire.ttf", this->size);
-    if (!this->Sans) {
-        logerr("Error open font TTF_OpenFont()");
-    }
-
+    this->font = font;
     this->display = guidraw->get_display();
     this->renderer = this->display->get_renderer();
     this->surface_label = NULL;
@@ -380,7 +429,7 @@ void TextLabel::GUI_init(const char* text, int x, int y, int size)
 
 void TextLabel::draw(){
     
-    surface_label = TTF_RenderText_Blended(this->Sans, this->text, CS_WHITE);
+    surface_label = TTF_RenderText_Blended(this->font->get_font(), this->text, CS_WHITE);
     message = SDL_CreateTextureFromSurface(renderer, surface_label);
 
     SDL_Rect message_rect;
@@ -391,8 +440,14 @@ void TextLabel::draw(){
     if (SDL_RenderCopy(renderer, message, NULL, &message_rect) == -1) {
         logerr("Erro mano");
     }
-    SDL_FreeSurface(surface_label);
-    SDL_DestroyTexture(message);
+    
+    SDL_FreeSurface(this->surface_label);
+    SDL_DestroyTexture(this->message);     
+}
+
+void TextLabel::free_resources()
+{
+    
 }
 
 /*
@@ -416,10 +471,13 @@ class AreaLogger : public OSGui
         void add_log(std::string text);
         void lock_view_end(bool end);
         void GUI_init(int x, int y, int width, int height);
+        void GUI_init(int x, int y, int width, int height, OSFont otherfont);
         void draw() override;
         void poll_events() override;
         static Uint32 timer(Uint32 interval, void* param);
+        std::vector<TextLabel> logs;
     private:
+        OSFont font;
         bool end_logger = false;
         int width;
         int height;
@@ -430,10 +488,8 @@ class AreaLogger : public OSGui
         int padding = 2;
         int spacing;
         int border_size = 2;
-
         void auto_clear();
 
-        std::vector<TextLabel> logs;
 };
 
 AreaLogger::AreaLogger(){}
@@ -441,16 +497,16 @@ AreaLogger::~AreaLogger(){}
 
 void AreaLogger::add_log(const char* text)
 {
-    TextLabel label;
-    label.GUI_init(text, this->position.x + this->spacing, this->position.y + this->spacing, 16);
-    this->logs.push_back(label);
+    TextLabel label = TextLabel();
+    label.GUI_init(&this->font, text, this->position.x + this->spacing, this->position.y + this->spacing, 16);
+    this->logs.push_back(label);   
 }
 
 void AreaLogger::add_log(std::string text)
 {
     TextLabel label;
-    label.GUI_init(text.c_str(), this->position.x + this->spacing, this->position.y + this->spacing, 16);
-    this->logs.push_back(label);
+    label.GUI_init(&this->font, text.c_str(), this->position.x + this->spacing, this->position.y + this->spacing, 16);
+    this->logs.push_back(label);     
 }
 
 void AreaLogger::lock_view_end(bool end)
@@ -464,6 +520,19 @@ void AreaLogger::GUI_init(int x, int y, int width, int height)
     this->width = width;
     this->height = height;
     this->spacing = (this->padding + border_size);
+    this->font.open_font("F:\\Projects\\cpp\\OSEngine\\fonts\\OpenSans-Regular.ttf", 16);
+    // start the timer func at (1second)
+    //SDL_TimerID my_timer_id = SDL_AddTimer(200, timer, this);
+}
+
+void AreaLogger::GUI_init(int x, int y, int width, int height, OSFont font)
+{
+    this->position = { x, y };
+    this->width = width;
+    this->height = height;
+    this->spacing = (this->padding + border_size);
+    this->font = font;
+
     // start the timer func at (1second)
     //SDL_TimerID my_timer_id = SDL_AddTimer(200, timer, this);
 }
@@ -477,8 +546,6 @@ void AreaLogger::draw()
     
     items_count = static_cast<int>(this->height / this->items_margin_y);
     
-    std::vector<TextLabel*> _logs;
-
     int _lim_min, _lim_max;    
 
     if(end_logger){
@@ -486,9 +553,11 @@ void AreaLogger::draw()
             position_scroll_y = (logs.size() - items_count) + 1;
         }        
     }        
-    std::cout << position_scroll_y << std::endl;
+    
     _lim_min = position_scroll_y;
     _lim_max = position_scroll_y + items_count;    
+   
+    std::vector<TextLabel*> _logs;
 
     for (int j = _lim_min; j < _lim_max; j++)
     {
@@ -506,6 +575,7 @@ void AreaLogger::draw()
     }
 
     _logs.clear();
+
 }
 
 void AreaLogger::poll_events()
@@ -561,11 +631,10 @@ void AreaLogger::auto_clear()
         for (int i = logs.size() / 2; i < logs.size(); i++)
         {
             _temp.push_back(logs[i]);
-        }
-        logs.clear();
+        }     
+        logs.clear();        
         logs = _temp;
     }    
 }
-
 
 #endif // !OSGUI_H

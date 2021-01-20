@@ -121,6 +121,11 @@ void Display::set_camera_fov(float fov)
 	this->camera.fov = fov;
 }
 
+void Display::set_clear_color_screen(uint32_t color)
+{
+	this->default_clear_color_buffer = color;
+}
+
 uint32_t* Display::get_color_buffer()
 {
 	return this->color_buffer;

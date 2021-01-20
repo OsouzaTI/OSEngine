@@ -1,22 +1,16 @@
 #ifndef OSENGINE_H
 #define OSENGINE_H
+#include <iostream>
 #include "display.h"
 #include "drawing.h"
 #include "osgui.hpp"
 #include "keyboard.h"
 #include "vector.hpp"
+#include "shapes.hpp"
 #include "mesh.h"
+#include <string>
 #include <string.h>
-
-#define __FILENAME__ (strrchr(__FILE__, '\\') ? strrchr(__FILE__, '\\') + 1 : __FILE__)
-
-//std::string("[")+std::string(__TIME__)+std::string("]::")+
-
-#define LOG(x) std::cout <<"["<< __TIME__ <<"]::" <<"["<< __FILE__ <<"] -> " << x << std::endl;
-#define INIT_LOG std::string("[")+std::string(__FILENAME__)+std::string("] -> ")
-#define STRLOG(x)	INIT_LOG + std::string(x)
-#define STR(x)	std::string(x)
-#define NSTR(x)	std::to_string(x)
+#include "osmacros.hpp"
 
 class OSEngine
 {
@@ -26,7 +20,7 @@ class OSEngine
 		bool game_loop;
 		int position_mouse_x;
 		int position_mouse_y;
-		SDL_Event keyboard_event;
+		SDL_Event keyboard_event;		
 		Drawing draw;		
 		Mesh mesh;
 		// Cria a janela
@@ -46,6 +40,7 @@ class OSEngine
 		inline Uint32 keyboard_event_key() { return this->keyboard_event.key.keysym.sym; };
 
 		void set_frame_rate(int frame_rate);
+		void set_background_color(uint32_t color);
 
 		int window_width();
 		int window_height();
@@ -67,6 +62,8 @@ OSEngine::OSEngine(){
 	this->game_loop = false;
 	this->keyboard_event = SDL_Event();
 	this->draw.set_display(&this->display);
+	OSGui::guidraw = &this->draw;
+	Shape::shapedraw = &this->draw;
 }
 
 OSEngine::~OSEngine(){}
@@ -101,6 +98,11 @@ inline void OSEngine::frame_rate_control()
 void OSEngine::set_frame_rate(int frame_rate)
 {
 	this->display.set_frame_rate(frame_rate);
+}
+
+void OSEngine::set_background_color(uint32_t color)
+{
+	this->display.set_clear_color_screen(color);
 }
 
 int OSEngine::window_width()

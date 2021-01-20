@@ -1,8 +1,4 @@
-#include <SDL.h>
-#include <iostream>
-#include <string>
 #include "os_engine.hpp"
-#include "osmath.hpp"
 
 class Janela : public OSEngine
 {
@@ -14,11 +10,9 @@ class Janela : public OSEngine
 		int angle_y = 0;
 		int angle_z = 0;
 		int teste_counter = 0;
-		DraggableCircle dc1;
-		DraggableCircle dc2;
-		SliderRange sd;
-		TextLabel lb1;
+
 		AreaLogger logger;
+		Ellipse elipse;
 
 		void engine_main() override;
 		void process_input() override;
@@ -28,24 +22,22 @@ class Janela : public OSEngine
 
 };
 
-Janela::Janela(){}
+Janela::Janela(){
+	this->elipse = Ellipse(
+		{ 100, 100, 0 },
+		{ 1, 1, 1 },
+		{ 0, 0, 0 },
+		5.0f
+	);
+}
 Janela::~Janela(){}
 
 void Janela::engine_main() {
 	create_window("Janela", 800, 600);
 
 	// inicializando GUI
-	dc1.GUI_init(&this->draw, 10, 10);
-	dc2.GUI_init(&this->draw, 100, 100);
-	sd.GUI_init(&this->draw, 10, 10, 300);
-	lb1.GUI_init(&this->draw, "Ozeias", 10, 200, 16);
-	logger.GUI_init(&this->draw, 0, -(250-window_height()), window_width(), 250);
-	logger.set_logger_view(true);
-	for (int i = 0; i < 100; i++)
-	{
-		std::string texto = std::string("Numero ") + std::to_string(i);
-		logger.add_log(texto.c_str());
-	}
+	logger.GUI_init(0, -(250-window_height()), window_width(), 250);
+	logger.lock_view_end(true);
 
 	create_camera(
 		{0, 0, 0},
@@ -98,7 +90,10 @@ void Janela::update()
 
 void Janela::render() {
 	clear_screen();	
-	logger.GUI_draw();
+	
+	logger.draw();
+	elipse.draw();
+
 	update_render();
 }
 

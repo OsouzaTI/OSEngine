@@ -47,6 +47,7 @@ class Display
 
 		void create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect = NULL);
 		void set_camera_fov(float fov);
+		void set_clear_color_screen(uint32_t color);
 
 		// retorna a referencia do buffer de cor
 		uint32_t* get_color_buffer();

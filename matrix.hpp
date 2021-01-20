@@ -33,7 +33,7 @@ typedef struct {
 /// Make a identity matrix 4x4
 /// </summary>
 /// <returns>Mat4x4</returns>
-Mat4x4 Mat4x4_MakeIdentity() {
+inline Mat4x4 Mat4x4_MakeIdentity() {
 	Mat4x4 m = { {
 		{1, 0, 0, 0},
 		{0, 1, 0, 0},
@@ -43,7 +43,7 @@ Mat4x4 Mat4x4_MakeIdentity() {
 	return m;
 }
 
-Mat4x4 Mat4x4_MakeZero() {
+inline Mat4x4 Mat4x4_MakeZero() {
 	Mat4x4 m = { {
 		{0, 0, 0, 0},
 		{0, 0, 0, 0},
@@ -53,7 +53,7 @@ Mat4x4 Mat4x4_MakeZero() {
 	return m;
 }
 
-Mat4x4 Mat4x4_MakeScale(float sx, float sy, float sz) {
+inline Mat4x4 Mat4x4_MakeScale(float sx, float sy, float sz) {
 	Mat4x4 m = Mat4x4_MakeIdentity();
 	m.m[0][0] = sx;
 	m.m[1][1] = sy;
@@ -61,7 +61,7 @@ Mat4x4 Mat4x4_MakeScale(float sx, float sy, float sz) {
 	return m;
 }
 
-Mat4x4 Mat4x4_MakeScale(float s) {
+inline Mat4x4 Mat4x4_MakeScale(float s) {
 	Mat4x4 m = Mat4x4_MakeIdentity();
 	m.m[0][0] = s;
 	m.m[1][1] = s;
@@ -69,7 +69,7 @@ Mat4x4 Mat4x4_MakeScale(float s) {
 	return m;
 }
 
-Mat4x4 Mat4x4_MakeTranslation(float tx, float ty, float tz) {
+inline Mat4x4 Mat4x4_MakeTranslation(float tx, float ty, float tz) {
 	Mat4x4 m = Mat4x4_MakeIdentity();
 	m.m[0][3] = tx;
 	m.m[1][3] = ty;
@@ -77,7 +77,7 @@ Mat4x4 Mat4x4_MakeTranslation(float tx, float ty, float tz) {
 	return m;
 }
 
-Mat4x4 Mat4x4_MakeRotationX(float angle) {
+inline Mat4x4 Mat4x4_MakeRotationX(float angle) {
 	Mat4x4 m = Mat4x4_MakeIdentity();
 	m.m[1][1] = cosf(angle);
 	m.m[1][2] = -sinf(angle);
@@ -86,7 +86,7 @@ Mat4x4 Mat4x4_MakeRotationX(float angle) {
 	return m;
 }
 
-Mat4x4 Mat4x4_MakeRotationY(float angle) {
+inline Mat4x4 Mat4x4_MakeRotationY(float angle) {
 	Mat4x4 m = Mat4x4_MakeIdentity();
 	m.m[0][0] = cosf(angle);
 	m.m[0][2] = sinf(angle);
@@ -95,7 +95,7 @@ Mat4x4 Mat4x4_MakeRotationY(float angle) {
 	return m;
 }
 
-Mat4x4 Mat4x4_MakeRotationZ(float angle) {
+inline Mat4x4 Mat4x4_MakeRotationZ(float angle) {
 	Mat4x4 m = Mat4x4_MakeIdentity();
 	m.m[0][0] = cosf(angle);
 	m.m[0][1] = -sinf(angle);
@@ -104,19 +104,19 @@ Mat4x4 Mat4x4_MakeRotationZ(float angle) {
 	return m;
 }
 
-Mat4x4 Mat4x4_MakeDistorcionXY(float angle) {
+inline Mat4x4 Mat4x4_MakeDistorcionXY(float angle) {
 	Mat4x4 m = Mat4x4_MakeIdentity();
 	m.m[0][1] = angle;
 	return m;
 }
 
-Mat4x4 Mat4x4_MakeDistorcionYX(float angle) {
+inline Mat4x4 Mat4x4_MakeDistorcionYX(float angle) {
 	Mat4x4 m = Mat4x4_MakeIdentity();
 	m.m[1][0] = angle;
 	return m;
 }
 
-Mat4x4 Mat4x4_MakePerspective(float fov, float aspect, float znear, float zfar) {
+inline Mat4x4 Mat4x4_MakePerspective(float fov, float aspect, float znear, float zfar) {
 
 	Mat4x4 m = Mat4x4_MakeZero();
 	m.m[0][0] = aspect * (1 / tanf(fov / 2));
@@ -129,7 +129,7 @@ Mat4x4 Mat4x4_MakePerspective(float fov, float aspect, float znear, float zfar) 
 }
 
 
-Mat4x4 Mat4x4_MultiplyMatrix(Mat4x4& a, Mat4x4& b) {
+inline Mat4x4 Mat4x4_MultiplyMatrix(Mat4x4& a, Mat4x4& b) {
 	Mat4x4 m;
 	for (int i = 0; i < 4; i++)
 	{
@@ -141,7 +141,8 @@ Mat4x4 Mat4x4_MultiplyMatrix(Mat4x4& a, Mat4x4& b) {
 	return m;
 }
 
-template<typename T>  vect4<T> Mat4x4_MultiplyVector(Mat4x4& m, vect4<T>& u) {
+template<typename T>
+vect4<T> Mat4x4_MultiplyVector(Mat4x4& m, vect4<T>& u) {
 	vect4<T> v;
 	v.x = m.m[0][0] * u.x + m.m[0][1] * u.y + m.m[0][2] * u.z + m.m[0][3] * u.w;
 	v.y = m.m[1][0] * u.x + m.m[1][1] * u.y + m.m[1][2] * u.z + m.m[1][3] * u.w;
@@ -150,7 +151,8 @@ template<typename T>  vect4<T> Mat4x4_MultiplyVector(Mat4x4& m, vect4<T>& u) {
 	return v;
 }
 
-template<typename T>  vect4<T> Mat4x4_MultiplyProjectVector(Mat4x4& m, vect4<T>& u) {
+template<typename T>
+vect4<T> Mat4x4_MultiplyProjectVector(Mat4x4& m, vect4<T>& u) {
 	vect4<T> v = Mat4x4_MultiplyVector(m, u);
 	if (v.w != 0) {
 		v.x /= v.w;

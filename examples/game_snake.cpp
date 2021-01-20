@@ -8,8 +8,10 @@
 
 #define LOG(x) std::cout << x << std::endl;
 #define GRID_SIZE 20
-#define WINDOW_WIDTH 1000
-#define WINDOW_HEIGHT 1000
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 800
+
+AreaLogger logger;
 
 struct SnakeBody
 {
@@ -93,17 +95,18 @@ struct FoodSnake {
 	int x;
 	int y;
 
-	void DetectCollision(int xx, int yy, Snake* snk) {
+	bool DetectCollision(int xx, int yy, Snake* snk) {
 		int GridCount = (int)(WINDOW_WIDTH / GRID_SIZE);
 
 		if (x == xx && y == yy) {
 			snk->tail++;
-			snk->pts++;
-			std::cout << snk->pts;
+			snk->pts++;						
 			x = rand() % GridCount;
-			y = rand() % GridCount;
+			y = rand() % GridCount - (4);
+			logger.add_log(STR("food: <x: ") + NSTR(x) + STR(", y: ") + NSTR(y) + STR(">"));
+			return true;
 		}
-
+		return false;
 	}
 
 };
@@ -115,6 +118,9 @@ class SnakeGame : public OSEngine
 		SnakeGame();
 		~SnakeGame();
 
+		// label score
+		TextLabel score;
+
 		void save_score();
 
 		void SnakeUpdate();
@@ -124,7 +130,7 @@ class SnakeGame : public OSEngine
 		void render() override;
 	private:
 		   Snake snk;
-		   FoodSnake fsnk{ 0, 0 };
+		   FoodSnake fsnk{ 20, 20 };
 };
 
 SnakeGame::SnakeGame(){}
@@ -163,19 +169,29 @@ void SnakeGame::SnakeUpdate()
 		GRID_SIZE - 2,
 		0xFFFF0000);
 
-	fsnk.DetectCollision(snk.posx, snk.posy, &snk);
+	if (fsnk.DetectCollision(snk.posx, snk.posy, &snk)) {
+		std::string _score = std::string("Score: ") + std::to_string(snk.pts);
+		score.set_text(_score.c_str());
+	}
+
 	if (snk.DetectSelfCollision()) {
 		save_score();
 		snk.pts = 0;
 	}
+		
 }
 
 void SnakeGame::engine_main()
 {
 	create_window("Janela", WINDOW_WIDTH, WINDOW_HEIGHT);
+
+	score.GUI_init("Score: 0", 10, 10, 20);
+	logger.GUI_init(0, -(100 - window_height()), 300, 100);
+	logger.lock_view_end(true);
+
 	set_frame_rate(15);	
-	vect2<float> nota = { 10, 15 };
-	std::cout << nota;
+	set_background_color(C_BLUE);
+
 	if (this->game_loop)
 		std::cout << "OPA\n";
 
@@ -216,10 +232,11 @@ void SnakeGame::update()
 void SnakeGame::render()
 {
 	clear_screen();
-
 	SnakeUpdate();
 
-	draw_buffer();
+	score.GUI_draw();
+	logger.GUI_draw();
+
 	update_render();
 }
 

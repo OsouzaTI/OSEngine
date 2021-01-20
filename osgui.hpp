@@ -6,6 +6,7 @@
 #include "drawing.h"
 #include "mouse.h"
 #include "osmath.hpp"
+#include "os_engine.hpp"
 
 #define logerr(x) std::cerr <<"[ERRO]: "<< x << std::endl
 #define logstd(x) std::cout <<"[LOG]: "<< x << std::endl
@@ -17,12 +18,12 @@ class OSGui
         ~OSGui() {};
 
 		// Override functions        
-		virtual void GUI_draw() {};
-        virtual void GUI_poll_events() {};
+		virtual void draw() {};
+        virtual void poll_events() {};
 
         inline vect2<int> get_position() { return this->position; };
 
-	    Drawing* draw;
+        static Drawing* guidraw;
         OS_MOUSE_STATE mouse;
         SDL_Event gui_events;
         vect2<int> mouse_coordinates;
@@ -41,6 +42,8 @@ class OSGui
 	private:
 };
 
+Drawing* OSGui::guidraw = NULL;
+
 /*
   _____                              _     _         _____ _          _
  |  __ \                            | |   | |       / ____(_)        | |
@@ -58,39 +61,37 @@ class DraggableCircle : public OSGui
 	    DraggableCircle();
 	    ~DraggableCircle();
 
-        void GUI_init(Drawing* draw, int x, int y);
-	    void GUI_draw() override;
-	    void GUI_poll_events() override;
+        void GUI_init(int x, int y);
+	    void draw() override;
+	    void poll_events() override;
     private:
         int size = 10;
 
 };
 
-DraggableCircle::DraggableCircle(){
-    this->draw = NULL;
-}
+DraggableCircle::DraggableCircle(){}
 DraggableCircle::~DraggableCircle(){}
 
 
-void DraggableCircle::GUI_init(Drawing* draw, int x, int y)
+void DraggableCircle::GUI_init(int x, int y)
 {
-    this->draw = draw;
+    
     this->position = { x, y };
 }
 
-void DraggableCircle::GUI_draw()
+void DraggableCircle::draw()
 {
-    GUI_poll_events();
+    poll_events();
 
-    draw->draw_line(position.x, position.y, mouse_coordinates.x, mouse_coordinates.y, C_BLUE);
+    guidraw->draw_line(position.x, position.y, mouse_coordinates.x, mouse_coordinates.y, C_BLUE);
 
     // draw circle
-    draw->draw_circle(position.x, position.y, size, color);
+    guidraw->draw_circle(position.x, position.y, size, color);
     // middle point
-    draw->draw_circle(position.x, position.y, 2, color);
+    guidraw->draw_circle(position.x, position.y, 2, color);
 }
 
-void DraggableCircle::GUI_poll_events()
+void DraggableCircle::poll_events()
 {
     SDL_GetMouseState(&mouse_coordinates.x, &mouse_coordinates.y);
 
@@ -153,10 +154,10 @@ class SliderRange : public OSGui
 
         int get_value();
 
-        void GUI_init(Drawing* draw, int x, int y, int size);
-        void GUI_init(Drawing* draw, int min_value, int max_value, int x, int y, int size);
-        void GUI_draw() override;
-        void GUI_poll_events() override;
+        void GUI_init(int x, int y, int size);
+        void GUI_init(int min_value, int max_value, int x, int y, int size);
+        void draw() override;
+        void poll_events() override;
 
     private:
         int value = 0;
@@ -181,9 +182,8 @@ int SliderRange::get_value()
     return this->value;
 }
 
-void SliderRange::GUI_init(Drawing* draw, int x, int y, int width)
+void SliderRange::GUI_init(int x, int y, int width)
 {
-    this->draw = draw;
     this->position = { x, y };
     this->width = width;
     this->height = width * 0.2;
@@ -196,9 +196,8 @@ void SliderRange::GUI_init(Drawing* draw, int x, int y, int width)
     };
 }
 
-void SliderRange::GUI_init(Drawing* draw, int min_value, int max_value, int x, int y, int size)
+void SliderRange::GUI_init(int min_value, int max_value, int x, int y, int size)
 {
-    this->draw = draw;
     this->min_value = min_value;
     this->max_value = max_value;
     this->position = { x, y };
@@ -215,13 +214,13 @@ void SliderRange::GUI_init(Drawing* draw, int min_value, int max_value, int x, i
     this->value = min_value;
 }
 
-void SliderRange::GUI_draw()
+void SliderRange::draw()
 {
-    GUI_poll_events();
+    poll_events();
     // background slider
-    draw->draw_fill_rect(position.x , position.y , width , height , background_color);
+    guidraw->draw_fill_rect(position.x , position.y , width , height , background_color);
     // dragabble
-    draw->draw_fill_rect(
+    guidraw->draw_fill_rect(
         draggable.x,
         draggable.y,
         draggable_width,
@@ -230,11 +229,11 @@ void SliderRange::GUI_draw()
     );
 
     // border slider
-    draw->draw_rect(position.x, position.y, width, height, border, border_color);
+    guidraw->draw_rect(position.x, position.y, width, height, border, border_color);
 
 }
 
-void SliderRange::GUI_poll_events()
+void SliderRange::poll_events()
 {
     SDL_GetMouseState(&mouse_coordinates.x, &mouse_coordinates.y);
     // distance to mouse
@@ -334,10 +333,11 @@ public:
     ~TextLabel();
 
     void set_position(int x, int y);
+    void set_text(const char* text);
 
-    void GUI_init(Drawing* draw, const char* text, int x, int y, int size);
-    void GUI_draw() override;
-    // void GUI_poll_events() override;
+    void GUI_init(const char* text, int x, int y, int size);
+    void draw() override;
+    // void poll_events() override;
 private:
     int size;
     char text[100];
@@ -357,11 +357,14 @@ void TextLabel::set_position(int x, int y)
     this->position = { x, y };
 }
 
-void TextLabel::GUI_init(Drawing* draw, const char* text, int x, int y, int size)
+void TextLabel::set_text(const char* text)
 {
-    this->draw = draw;
     strcpy(this->text, text);
-    std::cout << this->text << std::endl;
+}
+
+void TextLabel::GUI_init(const char* text, int x, int y, int size)
+{
+    strcpy(this->text, text);    
     this->position = {x, y};
     this->size = size;
     this->Sans = TTF_OpenFont("F:\\Projects\\cpp\\OSEngine\\fonts\\aAbsoluteEmpire.ttf", this->size);
@@ -369,13 +372,13 @@ void TextLabel::GUI_init(Drawing* draw, const char* text, int x, int y, int size
         logerr("Error open font TTF_OpenFont()");
     }
 
-    this->display = draw->get_display();
+    this->display = guidraw->get_display();
     this->renderer = this->display->get_renderer();
     this->surface_label = NULL;
     this->message = NULL;
 }
 
-void TextLabel::GUI_draw(){
+void TextLabel::draw(){
     
     surface_label = TTF_RenderText_Blended(this->Sans, this->text, CS_WHITE);
     message = SDL_CreateTextureFromSurface(renderer, surface_label);
@@ -411,10 +414,10 @@ class AreaLogger : public OSGui
 
         void add_log(const char* text);
         void add_log(std::string text);
-        void set_logger_view(bool end);
-        void GUI_init(Drawing* draw, int x, int y, int width, int height);
-        void GUI_draw() override;
-        void GUI_poll_events() override;
+        void lock_view_end(bool end);
+        void GUI_init(int x, int y, int width, int height);
+        void draw() override;
+        void poll_events() override;
         static Uint32 timer(Uint32 interval, void* param);
     private:
         bool end_logger = false;
@@ -439,25 +442,24 @@ AreaLogger::~AreaLogger(){}
 void AreaLogger::add_log(const char* text)
 {
     TextLabel label;
-    label.GUI_init(this->draw, text, this->position.x + this->spacing, this->position.y + this->spacing, 16);
+    label.GUI_init(text, this->position.x + this->spacing, this->position.y + this->spacing, 16);
     this->logs.push_back(label);
 }
 
 void AreaLogger::add_log(std::string text)
 {
     TextLabel label;
-    label.GUI_init(this->draw, text.c_str(), this->position.x + this->spacing, this->position.y + this->spacing, 16);
+    label.GUI_init(text.c_str(), this->position.x + this->spacing, this->position.y + this->spacing, 16);
     this->logs.push_back(label);
 }
 
-void AreaLogger::set_logger_view(bool end)
+void AreaLogger::lock_view_end(bool end)
 {
     this->end_logger = end;
 }
 
-void AreaLogger::GUI_init(Drawing* draw, int x, int y, int width, int height)
+void AreaLogger::GUI_init(int x, int y, int width, int height)
 {
-    this->draw = draw;
     this->position = { x, y };
     this->width = width;
     this->height = height;
@@ -466,12 +468,12 @@ void AreaLogger::GUI_init(Drawing* draw, int x, int y, int width, int height)
     //SDL_TimerID my_timer_id = SDL_AddTimer(200, timer, this);
 }
 
-void AreaLogger::GUI_draw()
+void AreaLogger::draw()
 {
     auto_clear();
-    GUI_poll_events();
-    draw->draw_fill_rect(this->position.x, this->position.y, this->width, this->height, this->background_color);
-    draw->draw_rect(this->position.x, this->position.y, this->width, this->height, this->border_size, this->border_color);
+    poll_events();
+    guidraw->draw_fill_rect(this->position.x, this->position.y, this->width, this->height, this->background_color);
+    guidraw->draw_rect(this->position.x, this->position.y, this->width, this->height, this->border_size, this->border_color);
     
     items_count = static_cast<int>(this->height / this->items_margin_y);
     
@@ -480,15 +482,17 @@ void AreaLogger::GUI_draw()
     int _lim_min, _lim_max;    
 
     if(end_logger){
-        position_scroll_y = (logs.size() - items_count)+1;
-    }    
-    
+        if (this->logs.size() >= items_count) {
+            position_scroll_y = (logs.size() - items_count) + 1;
+        }        
+    }        
+    std::cout << position_scroll_y << std::endl;
     _lim_min = position_scroll_y;
     _lim_max = position_scroll_y + items_count;    
 
     for (int j = _lim_min; j < _lim_max; j++)
     {
-        if (j <= logs.size()) {
+        if (j > 0 && j <= logs.size()) {
             _logs.push_back(&this->logs[j-1]);
         }
         else { break; }
@@ -497,14 +501,14 @@ void AreaLogger::GUI_draw()
     int i = 0;
     for (TextLabel* label : _logs) {                        
         label->position.y = this->position.y + (i * this->items_margin_y + this->spacing);        
-        label->GUI_draw();        
+        label->draw();        
         i++;
     }
 
     _logs.clear();
 }
 
-void AreaLogger::GUI_poll_events()
+void AreaLogger::poll_events()
 {
     
     SDL_GetMouseState(&mouse_coordinates.x, &mouse_coordinates.y);
@@ -513,8 +517,8 @@ void AreaLogger::GUI_poll_events()
         this->mouse_coordinates.y >= this->position.y &&
         this->mouse_coordinates.y < (this->position.y + this->height);
 
-    SDL_PollEvent(&gui_events);
     if (mouse_condicion) {        
+        SDL_PollEvent(&gui_events);
         switch (gui_events.type)
         {
             case OS_MOUSE_TYPE::MOUSE_SCROLL: {                
@@ -552,7 +556,7 @@ Uint32 AreaLogger::timer(Uint32 interval, void* param)
 
 void AreaLogger::auto_clear()
 {
-    if (logs.size() > 500) {
+    if (logs.size() > this->items_count * 10) {
         std::vector<TextLabel> _temp;
         for (int i = logs.size() / 2; i < logs.size(); i++)
         {
@@ -560,8 +564,7 @@ void AreaLogger::auto_clear()
         }
         logs.clear();
         logs = _temp;
-    }
-    logstd("Size do logs: "<< logs.size());
+    }    
 }
 
 

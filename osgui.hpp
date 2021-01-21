@@ -28,15 +28,20 @@ class OSGui
         SDL_Event gui_events;
         vect2<int> mouse_coordinates;
         vect2<int> position;
-        uint32_t color = C_RED;
-        uint32_t border_color = C_TYRIAN_BLUE;
-        uint32_t background_color = C_MIDNIGHT;
-        uint32_t draggable_color = C_MEXICAN_PINK;
-        uint32_t hover_color = C_WHITE;
+
+        // Style of GUI
+
+        SDL_Color text_color = CS_GREEN;
+        uint32_t color = blue_pallet.color5;
+        uint32_t border_color = C_WHITE;
+        uint32_t background_color = blue_pallet.color3;
+        uint32_t draggable_color = blue_pallet.color2;
+        uint32_t hover_color = blue_pallet.color3;
         uint32_t clicked_color = C_JAZZBERRY_JAM;
 
         // controll colors for draggables
         uint32_t current_draggable_color = draggable_color;
+        uint32_t current_background_color = background_color;
 
 
 	private:
@@ -429,7 +434,7 @@ void TextLabel::GUI_init(OSFont* font, const char* text, int x, int y, int size)
 
 void TextLabel::draw(){
     
-    surface_label = TTF_RenderText_Blended(this->font->get_font(), this->text, CS_WHITE);
+    surface_label = TTF_RenderText_Blended(this->font->get_font(), this->text, this->text_color);
     message = SDL_CreateTextureFromSurface(renderer, surface_label);
 
     SDL_Rect message_rect;
@@ -635,6 +640,130 @@ void AreaLogger::auto_clear()
         logs.clear();        
         logs = _temp;
     }    
+}
+
+class TextInput : public OSGui
+{
+    public:
+        TextInput();
+        ~TextInput();
+        
+        void GUI_init(const char* text, int x, int y, OSFont otherfont);
+        void draw() override;
+        void poll_events() override;
+
+    private:
+        bool field_focus;
+        bool max_lenght;
+        int font_size = 16;
+        int offsize_x;
+        int offsize_y;
+        int field_padding_x = 2;
+        int field_padding_y = 2;
+        int start_field_x;
+        int start_field_y;
+        int field_width = 120;
+        int field_height = 25;
+        int lim_characteres = 6;
+        char text[100];
+        std::string value;
+        TextLabel label;
+        TextLabel field;
+        OSFont font;
+};
+
+TextInput::TextInput(){}
+TextInput::~TextInput(){}
+
+void TextInput::GUI_init(const char* text, int x, int y, OSFont otherfont)
+{
+    this->field_focus = false;
+    strcpy(this->text, text);
+    this->position = { x, y };
+    this->font = otherfont;
+    this->offsize_x = strlen(text) * (this->font_size*0.5);
+    this->offsize_y = this->position.y - (this->font_size*0.3);
+    this->start_field_x = this->position.x + this->offsize_x;
+    this->start_field_y = this->position.y - this->offsize_y;
+    this->label.GUI_init(&this->font, this->text, this->position.x, this->position.y, 13);
+    this->field.GUI_init(&this->font, "..", this->start_field_x + this->field_padding_x, this->position.y, this->font_size);
+    
+}
+
+void TextInput::draw()
+{
+    this->poll_events();
+    this->guidraw->draw_fill_rect(
+        this->start_field_x,
+        this->start_field_y,
+        this->field_width,
+        this->field_height,
+        this->current_background_color
+    );
+    this->label.draw();
+    this->field.draw();
+}
+
+void TextInput::poll_events()
+{
+    max_lenght = this->value.length() > (this->field_width/this->lim_characteres) - (this->lim_characteres-1);
+    SDL_GetMouseState(&this->mouse_coordinates.x, &this->mouse_coordinates.y);
+    bool condicions = mouse_coordinates.x >= this->start_field_x &&
+        mouse_coordinates.x <= (this->start_field_x + this->field_width) &&
+        mouse_coordinates.y >= this->start_field_y &&
+        mouse_coordinates.y <= (this->start_field_y + this->field_height);
+    if (condicions && !this->field_focus) {
+        this->current_background_color = this->hover_color;
+        //logstd(this->field_focus);
+        SDL_PollEvent(&this->gui_events);
+        switch (gui_events.type)
+        {
+            case OS_MOUSE_TYPE::BUTTON_DOWN: {
+                if (gui_events.button.button == OS_MOUSE_BUTTON::BUTTON_LEFT) {                    
+                    mouse = OS_MOUSE_STATE::MOUSE_DOWN;
+                    this->field_focus = true;
+                }
+            }
+            break;
+            case OS_MOUSE_TYPE::BUTTON_UP: {
+                if (gui_events.button.button == OS_MOUSE_BUTTON::BUTTON_LEFT) {                    
+                    mouse = OS_MOUSE_STATE::MOUSE_RELEASE;
+                }
+            }
+            break;
+            default: {
+                mouse = OS_MOUSE_STATE::MOUSE_RELEASE;
+            }
+            break;
+        }
+    }
+    // mouse not above
+    else {
+        this->current_background_color = this->color;
+    }
+
+    if (this->field_focus) {
+        while (SDL_PollEvent(&this->gui_events) != 0) {
+            if (this->gui_events.type == SDL_TEXTINPUT || this->gui_events.type == SDL_KEYDOWN)
+            {
+                if (this->gui_events.type == SDL_KEYDOWN && this->gui_events.key.keysym.sym == SDLK_BACKSPACE && this->value.length() > 0)
+                {
+                    this->value = this->value.substr(0, this->value.length() - 1);
+                    this->field.set_text(this->value.c_str());
+                }
+                else if (this->gui_events.type == SDL_TEXTINPUT) {
+                    if (this->max_lenght)return;
+                    this->value += this->gui_events.text.text;
+                    this->field.set_text(this->value.c_str());
+                }
+                else if (this->gui_events.type == SDL_KEYDOWN && this->gui_events.key.keysym.sym == SDLK_RETURN)
+                {
+                    this->field_focus = false;
+                }
+            }
+        }
+    }
+
 }
 
 #endif // !OSGUI_H

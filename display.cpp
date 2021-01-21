@@ -104,7 +104,7 @@ SDL_Renderer* Display::get_renderer()
 
 void Display::create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect)
 {
-	float _aspect = static_cast<float>(this->height / this->width);
+	float _aspect = this->height / (float)this->width;
 	if (aspect != NULL) _aspect = aspect;
 	this->camera = {
 		position,

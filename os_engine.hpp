@@ -62,11 +62,14 @@ OSEngine::OSEngine(){
 	this->game_loop = false;
 	this->keyboard_event = SDL_Event();
 	this->draw.set_display(&this->display);
+	this->mesh.set_display(&this->display);
 	OSGui::guidraw = &this->draw;
-	Shape::shapedraw = &this->draw;
+	Shape::shapedraw = &this->draw;	
 }
 
-OSEngine::~OSEngine(){}
+OSEngine::~OSEngine(){
+	SDL_Quit();
+}
 
 void OSEngine::create_window(const char* title, int width, int height)
 {

@@ -1,8 +1,10 @@
 #ifndef DRAWING_H
 #define DRAWING_H
 
+#define OS_DRAW_CENTER
+
 #include "display.h"
-#include "oscolor.hpp"
+#include "oscolor.h"
 
 typedef struct 
 {

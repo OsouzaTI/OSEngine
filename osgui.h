@@ -2,41 +2,58 @@
 #define OSGUI_H
 
 #include <iostream>
+#include <ctype.h>
 #include <vector>
 #include "drawing.h"
 #include "mouse.h"
-#include "osmath.hpp"
-#include "os_engine.hpp"
+#include "keyboard.h"
+#include "osmath.h"
+#include "oscolor.h"
+#include "osfont.h"
 
 #define logerr(x) std::cerr <<"[ERRO]: "<< x << std::endl
 #define logstd(x) std::cout <<"[LOG]: "<< x << std::endl
 
+/*
+   ____   _____  _____       _
+  / __ \ / ____|/ ____|     (_)
+ | |  | | (___ | |  __ _   _ _
+ | |  | |\___ \| | |_ | | | | |
+ | |__| |____) | |__| | |_| | |
+  \____/|_____/ \_____|\__,_|_|
+
+*/
+
 class OSGui
 {
 	public:
-        OSGui() {};
-        ~OSGui() {};
 
 		// Override functions        
 		virtual void draw() {};
         virtual void poll_events() {};
+        vect2<int> get_position();
+        vect2<int> position;
 
-        inline vect2<int> get_position() { return this->position; };
 
         static Drawing* guidraw;
+        static OSFont global_font;
+        static OSPallet default_pallet;
+
+	private:
+
+    protected:
+        OSGui() {};
+        ~OSGui() {};
         OS_MOUSE_STATE mouse;
         SDL_Event gui_events;
         vect2<int> mouse_coordinates;
-        vect2<int> position;
-
         // Style of GUI
-
-        SDL_Color text_color = CS_GREEN;
-        uint32_t color = blue_pallet.color5;
+        SDL_Color text_color = default_pallet.text_color;
+        uint32_t color = default_pallet.color5;
         uint32_t border_color = C_WHITE;
-        uint32_t background_color = blue_pallet.color3;
-        uint32_t draggable_color = blue_pallet.color2;
-        uint32_t hover_color = blue_pallet.color3;
+        uint32_t background_color = default_pallet.color3;
+        uint32_t draggable_color = default_pallet.color2;
+        uint32_t hover_color = default_pallet.color3;
         uint32_t clicked_color = C_JAZZBERRY_JAM;
 
         // controll colors for draggables
@@ -44,50 +61,61 @@ class OSGui
         uint32_t current_background_color = background_color;
 
 
-	private:
 };
 
 Drawing* OSGui::guidraw = NULL;
+OSPallet OSGui::default_pallet;
+OSFont OSGui::global_font;
 
-
-
-class OSFont
+vect2<int> OSGui::get_position() {
+    return position;
+}
+// Singleton
+class OSGuiController
 {
     public:
-        OSFont();
-        inline OSFont(const char* name, int size){
-            this->font = OSFont::get_font(name, size);
-        };
-
-        ~OSFont();
-        static TTF_Font* get_font(const char* name, int size);
-        void open_font(const char* name, int size);
-        TTF_Font* get_font();
+        template<typename T, typename... TArgs>
+        T& add(TArgs&&... args);
+        //void update();
+        void draw();
+        static OSGuiController* get_instance();
+    protected:
+        OSGuiController();
+        ~OSGuiController();
     private:
-        TTF_Font* font;
+        static OSGuiController* constroller;
+        std::vector<OSGui*> GUI;
 };
 
-OSFont::OSFont(){}
-OSFont::~OSFont(){}
-
-TTF_Font* OSFont::get_font(const char* name, int size)
-{
-    TTF_Font* _font = TTF_OpenFont(name, size);
-    if (!_font) {
-        logerr("Error open font TTF_OpenFont()");
-        return NULL;
-    };
-    return _font;
+OSGuiController* OSGuiController::constroller = NULL;
+OSGuiController::OSGuiController(){}
+OSGuiController::~OSGuiController(){
+    GUI.clear();
 }
 
-void OSFont::open_font(const char* name, int size)
+template<typename T, typename ...TArgs>
+T& OSGuiController::add(TArgs&& ...args)
 {
-    this->font = OSFont::get_font(name, size);
+    T* newGui(new T(std::forward<TArgs>(args)...));
+    GUI.emplace_back(newGui);
+    return *newGui;
 }
 
-TTF_Font* OSFont::get_font()
+
+void OSGuiController::draw()
 {
-    return this->font;
+    for (auto& gui : GUI) {        
+        gui->draw();
+    }
+}
+
+OSGuiController* OSGuiController::get_instance()
+{
+    if (OSGuiController::constroller == NULL) {
+        logstd("OSGuiController created");
+        OSGuiController::constroller = new OSGuiController();
+    }
+    return OSGuiController::constroller;
 }
 
 
@@ -106,6 +134,7 @@ class DraggableCircle : public OSGui
 {
     public:	    
 	    DraggableCircle();
+	    DraggableCircle(int x, int y);
 	    ~DraggableCircle();
 
         void GUI_init(int x, int y);
@@ -118,13 +147,17 @@ class DraggableCircle : public OSGui
 };
 
 DraggableCircle::DraggableCircle(){}
+DraggableCircle::DraggableCircle(int x, int y)
+{
+    position = { x, y };
+}
 DraggableCircle::~DraggableCircle(){}
 
 
 void DraggableCircle::GUI_init(int x, int y)
 {
     
-    this->position = { x, y };
+    position = { x, y };
 }
 
 void DraggableCircle::draw()
@@ -146,10 +179,10 @@ void DraggableCircle::poll_events()
     // distance to mouse
     float dist = distance_to_point<int>(mouse_coordinates, position);
 
-    if (this->mouse == OS_MOUSE_STATE::MOUSE_DOWN) { this->offsize = this->size; }
-    else { this->offsize = 1; };
+    if (mouse == OS_MOUSE_STATE::MOUSE_DOWN) { offsize = size; }
+    else { offsize = 1; };
 
-    if (dist <= size + this->offsize)
+    if (dist <= size + offsize)
     {
         SDL_PollEvent(&gui_events);
         switch (gui_events.type)
@@ -201,11 +234,12 @@ class SliderRange : public OSGui
 {
     public:
         SliderRange();
+        SliderRange(int x, int y, int width);
         ~SliderRange();
 
         int get_value();
 
-        void GUI_init(int x, int y, int size);
+        void GUI_init(int x, int y, int width);
         void GUI_init(int min_value, int max_value, int x, int y, int size);
         void draw() override;
         void poll_events() override;
@@ -226,22 +260,26 @@ class SliderRange : public OSGui
 };
 
 SliderRange::SliderRange(){}
+SliderRange::SliderRange(int x, int y, int width)
+{
+    GUI_init(x, y, width);
+}
 SliderRange::~SliderRange(){}
 
 int SliderRange::get_value()
 {
-    return this->value;
+    return value;
 }
 
 void SliderRange::GUI_init(int x, int y, int width)
 {
-    this->position = { x, y };
+    position = { x, y };
     this->width = width;
-    this->height = width * 0.2;
-    this->draggable_width = width * 0.1;
-    this->draggable_height = height - border;
-    this->draggable_off_size = (draggable_width / 2 - 1);
-    this->draggable = {
+    height = width * 0.2;
+    draggable_width = width * 0.1;
+    draggable_height = height - border;
+    draggable_off_size = (draggable_width / 2 - 1);
+    draggable = {
         position.x + border,
         position.y + border,
     };
@@ -251,18 +289,18 @@ void SliderRange::GUI_init(int min_value, int max_value, int x, int y, int size)
 {
     this->min_value = min_value;
     this->max_value = max_value;
-    this->position = { x, y };
+    position = { x, y };
     this->width = width;
     this->height = width * 0.2;
-    this->draggable_width = width * 0.1;
-    this->draggable_height = height - border;
-    this->draggable_off_size = (draggable_width / 2 - 1);
-    this->draggable = {
+    draggable_width = width * 0.1;
+    draggable_height = height - border;
+    draggable_off_size = (draggable_width / 2 - 1);
+    draggable = {
         position.x + border,
         position.y + border,
     };
     // Define value with min_value
-    this->value = min_value;
+    value = this->min_value;
 }
 
 void SliderRange::draw()
@@ -380,10 +418,12 @@ class TextLabel : public OSGui
 {
 public:
     TextLabel();
+    TextLabel(OSFont* font, const char* text, int x, int y, int size);
     ~TextLabel();
 
     void set_position(int x, int y);
     void set_text(const char* text);    
+    int get_total_width();
 
     void GUI_init(OSFont* font, const char* text, int x, int y, int size);
     void draw() override;
@@ -392,18 +432,24 @@ public:
 private:
     int size;
     char text[100];
+    int total_width;
     OSFont* font;
     SDL_Surface* surface_label;
     SDL_Texture* message;
-
+    SDL_Rect message_rect;
     Display* display;
     SDL_Renderer* renderer;
 };
 
 TextLabel::TextLabel(){
-    this->font = NULL;
-    this->surface_label = NULL;
-    this->message = NULL;
+    font = NULL;
+    surface_label = NULL;
+    message = NULL;
+}
+
+TextLabel::TextLabel(OSFont* font, const char* text, int x, int y, int size)
+{
+    GUI_init(font, text, x, y, size);
 }
 
 TextLabel::~TextLabel(){
@@ -412,7 +458,7 @@ TextLabel::~TextLabel(){
 
 void TextLabel::set_position(int x, int y)
 {
-    this->position = { x, y };
+    position = { x, y };
 }
 
 void TextLabel::set_text(const char* text)
@@ -420,34 +466,47 @@ void TextLabel::set_text(const char* text)
     strcpy(this->text, text);
 }
 
+int TextLabel::get_total_width()
+{
+    return total_width;
+}
+
 void TextLabel::GUI_init(OSFont* font, const char* text, int x, int y, int size)
 {
     strcpy(this->text, text);    
-    this->position = {x, y};
+    position = {x, y};
     this->size = size;
     this->font = font;
-    this->display = guidraw->get_display();
-    this->renderer = this->display->get_renderer();
-    this->surface_label = NULL;
-    this->message = NULL;
+    display = guidraw->get_display();
+    renderer = display->get_renderer();
+    surface_label = NULL;
+    message = NULL;
+
+    total_width = (strlen(text) * (font->get_font_size() * 0.6));
+    message_rect.x = position.x;
+    message_rect.y = position.y;
+    message_rect.w = total_width;
+    message_rect.h = font->get_font_size() * 1.5;
+
 }
 
 void TextLabel::draw(){
     
-    surface_label = TTF_RenderText_Blended(this->font->get_font(), this->text, this->text_color);
+    surface_label = TTF_RenderText_Blended(font->get_font(), text, text_color);
     message = SDL_CreateTextureFromSurface(renderer, surface_label);
 
-    SDL_Rect message_rect;
-    message_rect.x = this->position.x;
-    message_rect.y = this->position.y;
-    message_rect.w = (strlen(this->text) * (size*0.5));
-    message_rect.h = 16;
+    total_width = (strlen(text) * (font->get_font_size() * 0.6));
+    message_rect.x = position.x;
+    message_rect.y = position.y;
+    message_rect.w = total_width;
+    message_rect.h = font->get_font_size()*1.5;
+
     if (SDL_RenderCopy(renderer, message, NULL, &message_rect) == -1) {
-        logerr("Erro mano");
+        //logerr("Erro mano");
     }
     
-    SDL_FreeSurface(this->surface_label);
-    SDL_DestroyTexture(this->message);     
+    SDL_FreeSurface(surface_label);
+    SDL_DestroyTexture(message);     
 }
 
 void TextLabel::free_resources()
@@ -470,6 +529,7 @@ class AreaLogger : public OSGui
 {
     public:
         AreaLogger();
+        AreaLogger(int x, int y, int width, int height);
         ~AreaLogger();
 
         void add_log(const char* text);
@@ -484,58 +544,61 @@ class AreaLogger : public OSGui
     private:
         OSFont font;
         bool end_logger = false;
-        int width;
-        int height;
+        int width = 0;
+        int height = 0;
         int position_scroll_x = 1;
         int position_scroll_y = 1;
         int items_margin_y = 16;
         int items_count;
         int padding = 2;
-        int spacing;
+        int spacing = 0;
         int border_size = 2;
         void auto_clear();
 
 };
 
 AreaLogger::AreaLogger(){}
+AreaLogger::AreaLogger(int x, int y, int width, int height)
+{
+    GUI_init(x, y, width, height);
+}
 AreaLogger::~AreaLogger(){}
 
 void AreaLogger::add_log(const char* text)
 {
     TextLabel label = TextLabel();
-    label.GUI_init(&this->font, text, this->position.x + this->spacing, this->position.y + this->spacing, 16);
-    this->logs.push_back(label);   
+    label.GUI_init(&OSGui::global_font, text, position.x + spacing, position.y + spacing, 16);
+    logs.push_back(label);   
 }
 
 void AreaLogger::add_log(std::string text)
 {
     TextLabel label;
-    label.GUI_init(&this->font, text.c_str(), this->position.x + this->spacing, this->position.y + this->spacing, 16);
-    this->logs.push_back(label);     
+    label.GUI_init(&OSGui::global_font, text.c_str(), position.x + spacing, position.y + spacing, 16);
+    logs.push_back(label);     
 }
 
 void AreaLogger::lock_view_end(bool end)
 {
-    this->end_logger = end;
+    end_logger = end;
 }
 
 void AreaLogger::GUI_init(int x, int y, int width, int height)
 {
-    this->position = { x, y };
+    position = { x, y };
     this->width = width;
     this->height = height;
-    this->spacing = (this->padding + border_size);
-    this->font.open_font("F:\\Projects\\cpp\\OSEngine\\fonts\\OpenSans-Regular.ttf", 16);
+    spacing = (padding + border_size);
     // start the timer func at (1second)
     //SDL_TimerID my_timer_id = SDL_AddTimer(200, timer, this);
 }
 
 void AreaLogger::GUI_init(int x, int y, int width, int height, OSFont font)
 {
-    this->position = { x, y };
+    position = { x, y };
     this->width = width;
     this->height = height;
-    this->spacing = (this->padding + border_size);
+    spacing = (padding + border_size);
     this->font = font;
 
     // start the timer func at (1second)
@@ -546,15 +609,15 @@ void AreaLogger::draw()
 {
     auto_clear();
     poll_events();
-    guidraw->draw_fill_rect(this->position.x, this->position.y, this->width, this->height, this->background_color);
-    guidraw->draw_rect(this->position.x, this->position.y, this->width, this->height, this->border_size, this->border_color);
+    guidraw->draw_fill_rect(position.x, position.y, width, height, background_color);
+    guidraw->draw_rect(position.x, position.y, width, height, border_size, border_color);
     
-    items_count = static_cast<int>(this->height / this->items_margin_y);
+    items_count = static_cast<int>(height / items_margin_y);
     
     int _lim_min, _lim_max;    
 
     if(end_logger){
-        if (this->logs.size() >= items_count) {
+        if (logs.size() >= items_count) {
             position_scroll_y = (logs.size() - items_count) + 1;
         }        
     }        
@@ -567,14 +630,14 @@ void AreaLogger::draw()
     for (int j = _lim_min; j < _lim_max; j++)
     {
         if (j > 0 && j <= logs.size()) {
-            _logs.push_back(&this->logs[j-1]);
+            _logs.push_back(&logs[j-1]);
         }
         else { break; }
     }
 
     int i = 0;
     for (TextLabel* label : _logs) {                        
-        label->position.y = this->position.y + (i * this->items_margin_y + this->spacing);        
+        label->position.y = position.y + (i * items_margin_y + spacing);        
         label->draw();        
         i++;
     }
@@ -587,10 +650,10 @@ void AreaLogger::poll_events()
 {
     
     SDL_GetMouseState(&mouse_coordinates.x, &mouse_coordinates.y);
-    bool mouse_condicion = this->mouse_coordinates.x >= this->position.x &&
-        this->mouse_coordinates.x < (this->position.x + this->width) &&
-        this->mouse_coordinates.y >= this->position.y &&
-        this->mouse_coordinates.y < (this->position.y + this->height);
+    bool mouse_condicion = mouse_coordinates.x >= position.x &&
+        mouse_coordinates.x < (position.x + width) &&
+        mouse_coordinates.y >= position.y &&
+        mouse_coordinates.y < (position.y + height);
 
     if (mouse_condicion) {        
         SDL_PollEvent(&gui_events);
@@ -601,12 +664,12 @@ void AreaLogger::poll_events()
                 if (gui_events.wheel.y > 0) // scroll up
                 {
                     logstd("UP");
-                    if (this->position_scroll_y > 1) this->position_scroll_y--;                
+                    if (position_scroll_y > 1) position_scroll_y--;                
                 }
                 else if (gui_events.wheel.y < 0) // scroll down
                 {
                     logstd("DOWN");
-                    if (this->position_scroll_y < this->logs.size()) this->position_scroll_y++;
+                    if (position_scroll_y < logs.size()) position_scroll_y++;
                 }
                 gui_events.type = NULL;                
        
@@ -618,7 +681,7 @@ void AreaLogger::poll_events()
         }
     }
 }
-
+// não está sendo usado
 Uint32 AreaLogger::timer(Uint32 interval, void* param)
 {
     AreaLogger* my_logger = (AreaLogger*)param;   
@@ -631,7 +694,7 @@ Uint32 AreaLogger::timer(Uint32 interval, void* param)
 
 void AreaLogger::auto_clear()
 {
-    if (logs.size() > this->items_count * 10) {
+    if (logs.size() > items_count * 100) {
         std::vector<TextLabel> _temp;
         for (int i = logs.size() / 2; i < logs.size(); i++)
         {
@@ -642,13 +705,29 @@ void AreaLogger::auto_clear()
     }    
 }
 
+/*
+  _______        _   _____                   _
+ |__   __|      | | |_   _|                 | |
+    | | _____  _| |_  | |  _ __  _ __  _   _| |_
+    | |/ _ \ \/ / __| | | | '_ \| '_ \| | | | __|
+    | |  __/>  <| |_ _| |_| | | | |_) | |_| | |_
+    |_|\___/_/\_\\__|_____|_| |_| .__/ \__,_|\__|
+                                | |
+                                |_|
+*/
+
 class TextInput : public OSGui
 {
     public:
         TextInput();
+        TextInput(const char* text, int x, int y);
         ~TextInput();
         
-        void GUI_init(const char* text, int x, int y, OSFont otherfont);
+        void set_numerical_value(char controller);
+        void set_value(const char* value);
+        int get_total_width();
+        void* get_numerical_value();
+        void GUI_init(const char* text, int x, int y);
         void draw() override;
         void poll_events() override;
 
@@ -664,64 +743,117 @@ class TextInput : public OSGui
         int start_field_y;
         int field_width = 120;
         int field_height = 25;
+        int total_width;
         int lim_characteres = 6;
         char text[100];
         std::string value;
+        char numerical_controller = 'f';
+        void* numerical_value;
         TextLabel label;
         TextLabel field;
         OSFont font;
+
+    protected:
+        int inumerical_value = 1;
+        float fnumerical_value = 1.0f;
 };
 
-TextInput::TextInput(){}
+TextInput::TextInput(){
+    numerical_value = NULL;
+}
+TextInput::TextInput(const char* text, int x, int y)
+{
+    GUI_init(text, x, y);
+}
 TextInput::~TextInput(){}
 
-void TextInput::GUI_init(const char* text, int x, int y, OSFont otherfont)
+void TextInput::set_numerical_value(char controller)
 {
-    this->field_focus = false;
+    switch (controller)
+    {
+        case 'i':
+            inumerical_value = atoi(value.c_str());
+            numerical_value = &inumerical_value;
+            break;
+        case 'f':
+            fnumerical_value = atof(value.c_str());
+            numerical_value = &fnumerical_value;
+            break;
+        default:
+            break;
+    }
+}
+
+void TextInput::set_value(const char* value)
+{
+    this->value = std::string(value);
+}
+
+int TextInput::get_total_width()
+{
+    return total_width;
+}
+
+void* TextInput::get_numerical_value()
+{
+    if (numerical_value == NULL) {        
+        numerical_value = &fnumerical_value;
+    }
+    return numerical_value;
+}
+
+void TextInput::GUI_init(const char* text, int x, int y)
+{
+    field_focus = false;
     strcpy(this->text, text);
-    this->position = { x, y };
-    this->font = otherfont;
-    this->offsize_x = strlen(text) * (this->font_size*0.5);
-    this->offsize_y = this->position.y - (this->font_size*0.3);
-    this->start_field_x = this->position.x + this->offsize_x;
-    this->start_field_y = this->position.y - this->offsize_y;
-    this->label.GUI_init(&this->font, this->text, this->position.x, this->position.y, 13);
-    this->field.GUI_init(&this->font, "..", this->start_field_x + this->field_padding_x, this->position.y, this->font_size);
-    
+    position = { x, y };
+    font = OSGui::global_font;
+
+    offsize_x = strlen(this->text) * (font_size*0.5);
+    offsize_y = (font_size*0.3);
+
+    label.GUI_init(&font, this->text, position.x, position.y, 13);
+    start_field_x = position.x + label.get_total_width();
+    start_field_y = position.y - offsize_y;
+
+    field.GUI_init(&font, value.c_str(), start_field_x + field_padding_x, position.y, font_size);    
+    total_width = label.get_total_width() + field_width;
+
 }
 
 void TextInput::draw()
 {
-    this->poll_events();
-    this->guidraw->draw_fill_rect(
-        this->start_field_x,
-        this->start_field_y,
-        this->field_width,
-        this->field_height,
-        this->current_background_color
+    poll_events();
+    guidraw->draw_fill_rect(
+        start_field_x,
+        start_field_y,
+        field_width,
+        field_height,
+        current_background_color
     );
-    this->label.draw();
-    this->field.draw();
+    label.draw();
+    field.draw();
 }
 
 void TextInput::poll_events()
 {
-    max_lenght = this->value.length() > (this->field_width/this->lim_characteres) - (this->lim_characteres-1);
-    SDL_GetMouseState(&this->mouse_coordinates.x, &this->mouse_coordinates.y);
-    bool condicions = mouse_coordinates.x >= this->start_field_x &&
-        mouse_coordinates.x <= (this->start_field_x + this->field_width) &&
-        mouse_coordinates.y >= this->start_field_y &&
-        mouse_coordinates.y <= (this->start_field_y + this->field_height);
-    if (condicions && !this->field_focus) {
-        this->current_background_color = this->hover_color;
-        //logstd(this->field_focus);
-        SDL_PollEvent(&this->gui_events);
+    max_lenght = value.length() > (field_width/lim_characteres) - (lim_characteres-1);
+    SDL_GetMouseState(&mouse_coordinates.x, &mouse_coordinates.y);
+    bool condicions = mouse_coordinates.x >= start_field_x &&
+        mouse_coordinates.x <= (start_field_x + field_width) &&
+        mouse_coordinates.y >= start_field_y &&
+        mouse_coordinates.y <= (start_field_y + field_height);
+    if (condicions && !field_focus) {
+        // hover color 
+        current_background_color = hover_color;
+        
+        SDL_PollEvent(&gui_events);
         switch (gui_events.type)
         {
             case OS_MOUSE_TYPE::BUTTON_DOWN: {
                 if (gui_events.button.button == OS_MOUSE_BUTTON::BUTTON_LEFT) {                    
                     mouse = OS_MOUSE_STATE::MOUSE_DOWN;
-                    this->field_focus = true;
+                    field_focus = true;
                 }
             }
             break;
@@ -737,31 +869,202 @@ void TextInput::poll_events()
             break;
         }
     }
-    // mouse not above
     else {
-        this->current_background_color = this->color;
+        // hover color 
+        current_background_color = color;
     }
 
-    if (this->field_focus) {
-        while (SDL_PollEvent(&this->gui_events) != 0) {
-            if (this->gui_events.type == SDL_TEXTINPUT || this->gui_events.type == SDL_KEYDOWN)
+    if (field_focus) {
+        while (SDL_PollEvent(&gui_events) != 0) {
+            if (gui_events.type == OS_TEXT::INPUT || gui_events.type == OS_KEYBOARD_TYPE::KEY_DOWN)
             {
-                if (this->gui_events.type == SDL_KEYDOWN && this->gui_events.key.keysym.sym == SDLK_BACKSPACE && this->value.length() > 0)
+                if (gui_events.type == OS_KEYBOARD_TYPE::KEY_DOWN &&
+                    gui_events.key.keysym.sym == OS_KEYBOARD_KEY::BT_BACKSPACE &&
+                    value.length() > 0
+                )
                 {
-                    this->value = this->value.substr(0, this->value.length() - 1);
-                    this->field.set_text(this->value.c_str());
+                    value = value.substr(0, value.length() - 1);
+                    field.set_text(value.c_str());
                 }
-                else if (this->gui_events.type == SDL_TEXTINPUT) {
-                    if (this->max_lenght)return;
-                    this->value += this->gui_events.text.text;
-                    this->field.set_text(this->value.c_str());
+                else if (gui_events.type == OS_TEXT::INPUT) {
+                    if (max_lenght)return;
+                    value += gui_events.text.text;
+                    field.set_text(value.c_str());
                 }
-                else if (this->gui_events.type == SDL_KEYDOWN && this->gui_events.key.keysym.sym == SDLK_RETURN)
+                else if (gui_events.type == OS_KEYBOARD_TYPE::KEY_DOWN &&
+                    gui_events.key.keysym.sym == OS_KEYBOARD_KEY::BT_ENTER)
                 {
-                    this->field_focus = false;
+                    field_focus = false;
+                    if (isdigit(value.c_str()[0])) {
+                        set_numerical_value(numerical_controller);
+                        logstd(*(float*)numerical_value);
+                    }
                 }
             }
         }
+    }
+
+}
+
+class TransformInput : public OSGui
+{
+    public:
+        TransformInput();
+        TransformInput(const char* label, int x, int y);
+        ~TransformInput();
+
+        vect3<float> get_transform_xyz();
+
+        void GUI_init(const char* label, int x, int y);
+        void draw() override;
+        void poll_events() override;
+
+    private:
+        int margin_y = 15;
+        int offsizebox = 10;
+        vect3<float> transform_xyz;
+        TextInput transform_x;
+        TextInput transform_y;
+        TextInput transform_z;
+        TextLabel label;
+};
+
+TransformInput::TransformInput(){
+    transform_xyz = { 1.0f , 1.0f, 1.0f };
+}
+TransformInput::TransformInput(const char* label, int x, int y)
+{
+    GUI_init(label, x, y);
+}
+TransformInput::~TransformInput(){}
+
+vect3<float> TransformInput::get_transform_xyz()
+{
+    return transform_xyz;
+}
+
+void TransformInput::GUI_init(const char* label, int x, int y)
+{
+    transform_xyz = { 1, 1, 1 };
+    position = { x, y };     
+    this->label.GUI_init(&OSGui::global_font, label, x, y, 13);
+    transform_x.set_value("1");
+    transform_y.set_value("1");
+    transform_z.set_value("1");
+    transform_x.GUI_init("X: ", position.x, position.y + margin_y * 2);    
+    transform_y.GUI_init("Y: ", position.x, position.y + margin_y * 4);    
+    transform_z.GUI_init("Z: ", position.x, position.y + margin_y * 6);
+
+}
+
+void TransformInput::draw()
+{
+    poll_events();
+    guidraw->draw_rect(
+        position.x - offsizebox,
+        position.y ,
+        transform_x.get_total_width() + offsizebox*2,
+        130, 2,
+        border_color
+    );
+
+    transform_x.draw();
+    transform_y.draw();
+    transform_z.draw();
+    label.draw();
+}
+
+void TransformInput::poll_events(){
+    transform_xyz.x = *(float*)transform_x.get_numerical_value();
+    transform_xyz.y = *(float*)transform_y.get_numerical_value();
+    transform_xyz.z = *(float*)transform_z.get_numerical_value();
+    //std::cout << transform_xyz << std::endl;
+}
+
+
+class RadioButton : public OSGui
+{
+    public:
+        RadioButton();
+        RadioButton(const char* label, int x, int y, bool* target, int size);
+        ~RadioButton();
+
+        void GUI_init(const char* label, int x, int y, bool* target, int size);
+        void draw() override;
+        void poll_events() override;
+
+    private:
+        int size;
+        bool* target;
+        int border_size = 2;
+        int offsize_button_x = 6;
+        int offsize_button_y = 6;
+        TextLabel label;
+};
+
+RadioButton::RadioButton()
+{
+    target = NULL;
+}
+
+RadioButton::RadioButton(const char* label, int x, int y, bool* target, int size)
+{
+    GUI_init(label, x, y, target, size);
+}
+
+RadioButton::~RadioButton(){}
+
+void RadioButton::GUI_init(const char* label, int x, int y, bool* target, int size)
+{
+    this->label.GUI_init(&OSGui::global_font, label, x, y, 12);
+    int width_label = this->label.get_total_width() + offsize_button_x;
+    position = { width_label + x, offsize_button_y + y };
+    this->target = target;
+    this->size = size;    
+}
+
+void RadioButton::draw()
+{
+    poll_events();
+    label.draw();
+    if(*target)
+        guidraw->draw_fill_rect(position.x, position.y, size, size, background_color);
+    guidraw->draw_rect(position.x, position.y, size, size, border_size, border_color);
+}
+
+void RadioButton::poll_events()
+{
+    SDL_GetMouseState(&mouse_coordinates.x, &mouse_coordinates.y);
+    bool condicions = mouse_coordinates.x >= position.x &&
+        mouse_coordinates.x <= (position.x + size) &&
+        mouse_coordinates.y >= position.y &&
+        mouse_coordinates.y <= (position.y + size);
+
+    if (condicions) {
+        logstd("RADIO BUTTON");
+        logstd(*target);
+        SDL_PollEvent(&gui_events);
+        switch (gui_events.type)
+        {
+            case OS_MOUSE_TYPE::BUTTON_DOWN: {
+                if (gui_events.button.button == OS_MOUSE_BUTTON::BUTTON_LEFT) {
+                    mouse = OS_MOUSE_STATE::MOUSE_DOWN;
+                    *target = !*target;
+                }
+            }
+            break;
+            case OS_MOUSE_TYPE::BUTTON_UP: {
+                if (gui_events.button.button == OS_MOUSE_BUTTON::BUTTON_LEFT) {
+                    mouse = OS_MOUSE_STATE::MOUSE_RELEASE;
+                }
+            }
+                                         break;
+            default: {
+                mouse = OS_MOUSE_STATE::MOUSE_RELEASE;
+            }
+            break;
+        }
+        gui_events.type = NULL;
     }
 
 }

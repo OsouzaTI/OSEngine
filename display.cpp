@@ -10,11 +10,11 @@ Display::Display()
 	this->title = "undefined";
 	this->width = 0;
 	this->height = 0;
-	this->default_clear_color_buffer = 0xFF000000;
+	this->default_clear_color_buffer = 0x020A69FF;
 	this->previous_frame_time = 0;
 	this->frame_target_time = 1000.0f/60;
 	this->frame_rate = 0.0f;
-	//this->buffer_title = NULL;
+	this->buffer_title = new char[200];	
 }
 
 Display::~Display()
@@ -38,14 +38,14 @@ bool Display::init_window(const char* title, int width, int height)
 		std::cout << "Erro na inicialização do TTF_init\n";
 		success = false;
 	}
-
+	SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
 	this->window = SDL_CreateWindow(
 		this->title,
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
 		this->width,
 		this->height,
-		SDL_WINDOW_MOUSE_CAPTURE
+		SDL_WINDOW_MOUSE_CAPTURE		
 	);
 
 	if (this->window == NULL) {
@@ -68,8 +68,8 @@ void Display::setup_window()
 	this->color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * this->width * this->height);
 	this->texture_buffer = SDL_CreateTexture(
 		this->renderer,
-		SDL_PIXELFORMAT_ARGB8888,
-		SDL_TEXTUREACCESS_STATIC,
+		SDL_PIXELFORMAT_RGBA8888,
+		SDL_TEXTUREACCESS_TARGET,
 		this->width,
 		this->height
 	);
@@ -100,6 +100,16 @@ void Display::clear_buffer()
 SDL_Renderer* Display::get_renderer()
 {
 	return this->renderer;
+}
+
+SDL_Window* Display::get_window()
+{
+	return this->window;
+}
+
+SDL_Texture* Display::get_texture()
+{
+	return texture_buffer;
 }
 
 void Display::create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect)

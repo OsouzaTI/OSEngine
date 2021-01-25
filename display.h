@@ -2,7 +2,7 @@
 #define DISPLAY_H
 #include <SDL.h>
 #include <SDL_ttf.h>
-#include "vector.hpp"
+#include "vector.h"
 
 typedef struct {
 	vect3<float> point;
@@ -41,6 +41,8 @@ class Display
 		void clear_buffer();
 
 		SDL_Renderer* get_renderer();
+		SDL_Window* get_window();
+		SDL_Texture* get_texture();
 
 		// atualiza a tela apos as escritas
 		inline void sdl_render_present() { SDL_RenderPresent(this->renderer); };
@@ -62,7 +64,7 @@ class Display
 		Uint32 previous_frame_time;
 		float frame_target_time;
 		float frame_rate;
-		char buffer_title[200];
+		char* buffer_title;
 };
 
 

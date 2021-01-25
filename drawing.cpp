@@ -1,5 +1,5 @@
 #include "drawing.h"
-#include "osmath.hpp"
+#include "osmath.h"
 #include <iostream>
 
 
@@ -28,7 +28,7 @@ void Drawing::draw_pixel(int x, int y, uint32_t color)
     if (x >= 0 && x < this->display->width && y >= 0 && y < this->display->height) {         
         uint32_t* color_buffer = this->display->get_color_buffer();
         color_buffer[pixel(x, y)] = color;
-    }        
+    }
 }
 
 void Drawing::draw_rect(int x, int y, int w, int h, int border_size, uint32_t color) {

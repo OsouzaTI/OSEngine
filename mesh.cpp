@@ -1,6 +1,6 @@
 #include "mesh.h"
-#include "matrix.hpp"
-#include "osmath.hpp"
+#include "matrix.h"
+#include "osmath.h"
 #include <iostream>
 
 Mesh::Mesh()

@@ -1,16 +1,16 @@
 #ifndef OSENGINE_H
 #define OSENGINE_H
-#include <iostream>
+
 #include "display.h"
 #include "drawing.h"
-#include "osgui.hpp"
+#include "osgui.h"
 #include "keyboard.h"
-#include "vector.hpp"
-#include "shapes.hpp"
+#include "vector.h"
+#include "shapes.h"
 #include "mesh.h"
-#include <string>
-#include <string.h>
-#include "osmacros.hpp"
+#include "osmacros.h"
+#include "osimgui.h"
+#include "oscene_controller.h"
 
 class OSEngine
 {
@@ -20,9 +20,14 @@ class OSEngine
 		bool game_loop;
 		int position_mouse_x;
 		int position_mouse_y;
+		vect2<float> center_screen;
+
 		SDL_Event keyboard_event;		
 		Drawing draw;		
-		Mesh mesh;
+		Mesh mesh;		
+		OSGuiController* GUI = OSGuiController::get_instance();
+		OSImgui* OSIMGUI = OSImgui::get_instance();
+		OSceneController* SCENE = OSceneController::get_instance();
 		// Cria a janela
 		void create_window(const char* title, int width, int height);
 		// Limpa o buffer de cor
@@ -30,8 +35,8 @@ class OSEngine
 		// desenha o buffer
 		void draw_buffer();
 		// Atualiza o render
-		void update_render();
-		
+		void update_render();	
+
 		void frame_rate_control();
 		// Ler os eventos do teclado
 		inline void read_event() { SDL_PollEvent(&this->keyboard_event); };
@@ -41,6 +46,7 @@ class OSEngine
 
 		void set_frame_rate(int frame_rate);
 		void set_background_color(uint32_t color);
+		void run();
 
 		int window_width();
 		int window_height();
@@ -50,31 +56,50 @@ class OSEngine
 		// Metodos que serão sobrescritos pela classe filha
 		virtual void engine_main() {}; // a cabeça do jogo
 		virtual void update() {}; // o pré draw
-		virtual void render() {}; // o draw
-		// virtual void GUI_render() {}; // render GUI -- ??
+		virtual void render() {}; // o draw		
 		virtual void process_input() {}; // processamento do teclado e etc
-
+		bool show_demo_window = true;
 	private:
 		Display display;
 };
 
 OSEngine::OSEngine(){
-	this->game_loop = false;
-	this->keyboard_event = SDL_Event();
-	this->draw.set_display(&this->display);
-	this->mesh.set_display(&this->display);
+
+	game_loop = false;
+	keyboard_event = SDL_Event();
+	draw.set_display(&this->display);
+	mesh.set_display(&this->display);
+	position_mouse_x = 0;
+	position_mouse_y = 0;
 	OSGui::guidraw = &this->draw;
-	Shape::shapedraw = &this->draw;	
+	OSGui::default_pallet = Pallets::sky_blue_rutvi;
+	Shape::shapedraw = &this->draw;		
+	SDL_StartTextInput();
 }
 
 OSEngine::~OSEngine(){
+	SDL_StopTextInput();
+	SDL_DestroyRenderer(this->display.get_renderer());
+	SDL_DestroyWindow(this->display.get_window());
+	TTF_Quit();
 	SDL_Quit();
 }
 
 void OSEngine::create_window(const char* title, int width, int height)
 {
 	this->game_loop = this->display.init_window(title, width, height);	
-	this->display.setup_window();
+	this->display.setup_window();	
+	center_screen = { width / 2.0f, height / 2.0f };
+	Shape::center_screen = &center_screen;
+	// set the font
+	OSGui::global_font = OSFont("F:\\Projects\\cpp\\OSEngine\\fonts\\OpenSans-Regular.ttf", 14);
+	// imgui
+	OSIMGUI->set_window(display.get_window());
+	OSIMGUI->set_renderer(display.get_renderer());
+	OSIMGUI->set_texture(display.get_texture());
+	OSIMGUI->set_event(&keyboard_event);
+	OSIMGUI->set_scene(SCENE->get_scene());
+	OSIMGUI->set_scene_controller(SCENE);
 }
 
 void OSEngine::clear_screen()
@@ -89,11 +114,13 @@ void OSEngine::draw_buffer()
 
 void OSEngine::update_render()
 {	
-	this->display.sdl_render_present();
-	this->display.draw_buffer();
+	SCENE->draw();
+	display.draw_buffer();
+	OSIMGUI->draw();
+	display.sdl_render_present();
 }
 
-inline void OSEngine::frame_rate_control()
+void OSEngine::frame_rate_control()
 {
 	this->display.frame_rate_control();
 }
@@ -108,17 +135,33 @@ void OSEngine::set_background_color(uint32_t color)
 	this->display.set_clear_color_screen(color);
 }
 
+void OSEngine::run()
+{
+	engine_main();
+	OSIMGUI->setup(); // setup imgui
+	while (this->game_loop) {		
+		process_input();
+
+		clear_screen();
+		update();
+		render();
+
+		// update screen
+		update_render();
+	}
+}
+
 int OSEngine::window_width()
 {
 	return this->display.width;
 }
 
-inline int OSEngine::window_height()
+int OSEngine::window_height()
 {
 	return this->display.height;
 }
 
-inline Display* OSEngine::get_display()
+Display* OSEngine::get_display()
 {
 	return &this->display;
 }

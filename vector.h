@@ -1,5 +1,5 @@
-#ifndef VECTOR_HPP
-#define VECTOR_HPP
+#ifndef VECTOR_H
+#define VECTOR_H
 
 #include <ostream>
 
@@ -63,6 +63,13 @@ vect2<T> operator+(const vect2<T> u, const vect2<T> v) {
 		u.y + v.y,
 	};
 }
+
+template<typename T>
+std::ostream& operator<< (std::ostream& os, vect3<T>& p) {
+	os << "vector3D <" << p.x << "," << p.y << "," << p.z << ">" << std::endl;
+	return os;
+}
+
 
 template<typename T>
 vect3<T> operator+(const vect3<T> u, const vect3<T> v) {

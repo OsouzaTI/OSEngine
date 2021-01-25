@@ -15,8 +15,9 @@ namespace Math {
 		return x + ((y - x) / (b - a)) * (v - a);
 	}
 
-	inline void swap(int* a, int* b) {
-		int temp = *a;
+	template<typename T>
+	inline void swap(T* a, T* b) {
+		T temp = *a;
 		*a = *b;
 		*b = temp;
 	}

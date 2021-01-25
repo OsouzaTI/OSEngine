@@ -2,7 +2,7 @@
 #define MESH_H
 
 #include <vector>
-#include "vector.hpp"
+#include "vector.h"
 #include "drawing.h"
 
 typedef struct {

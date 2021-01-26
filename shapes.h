@@ -17,6 +17,7 @@ class Shape
 
 		static Drawing* shapedraw;
 		static vect2<float>* center_screen;
+		static int count_shapes;
 		char name[100];
 		uint32_t color = C_WHITE;
 		vect3<float> position;
@@ -43,6 +44,7 @@ class Shape
 
 Drawing* Shape::shapedraw = NULL;
 vect2<float>* Shape::center_screen = NULL;
+int Shape::count_shapes = 0;
 
 void Shape::set_color(uint32_t color) {
 	logstd(color);
@@ -89,6 +91,7 @@ vect3<float>* Shape::get_rotation()
 class Ellipse : public Shape
 {
 	public:
+		Ellipse();
 		Ellipse(const char* name, vect3<float> position, vect3<float> scale, vect3<float> rotation, float radius);
 		~Ellipse();
 
@@ -101,6 +104,27 @@ class Ellipse : public Shape
 
 		
 };
+
+Ellipse::Ellipse()
+{
+	sprintf(this->name,"Ellipse %d", Shape::count_shapes++);
+	this->position = { 0, 0, 0 };
+	this->scale = { 1, 1, 1 };
+	this->rotation = { 0, 0, 0 };
+	this->radius = 30;
+	this->center.GUI_init(center_screen->x + this->position.x, center_screen->y + this->position.y);
+	this->transformations = { {
+		{1, 0,  0, 0},
+		{0, 1,  0, 0},
+		{0, 0, -1, 0},
+		{0, 0,	0, 1},
+	} };
+
+	this->scale_matrix = Mat4x4_MakeScale(this->scale.x * this->radius, this->scale.y * this->radius, 1);
+	this->rotate_matrix_x = Mat4x4_MakeRotationX(this->rotation.x);
+	this->rotate_matrix_y = Mat4x4_MakeRotationY(this->rotation.y);
+	this->rotate_matrix_z = Mat4x4_MakeRotationZ(this->rotation.z);
+}
 
 Ellipse::Ellipse(const char* name, vect3<float> position, vect3<float> scale, vect3<float> rotation, float radius)
 {

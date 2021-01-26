@@ -24,6 +24,7 @@ class Drawing
 
 		Display* get_display();
 		void set_display(Display* display);
+		void set_camera(Camera* camera);
 
 		int pixel(int x, int y);
 		void draw_pixel(int x, int y, uint32_t color);
@@ -37,6 +38,9 @@ class Drawing
 		// Primitive
 		void fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
 		void fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
+		void fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
+		float back_face_culling(int x0, int y0, int x1, int y1, int x2, int y2);
+
 		void draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
 		void draw_fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color);
 
@@ -46,6 +50,7 @@ class Drawing
 		void draw_implicit_line(int x1, int y1, int x2, int y2, uint32_t color);
 	private:
 		Display* display;
+		Camera* camera;
 };
 
 #endif // !DRAWING_H

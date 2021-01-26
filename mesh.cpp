@@ -5,6 +5,17 @@
 
 Mesh::Mesh()
 {
+	mesh.scale.x = 5;
+	mesh.scale.y = 5;
+	mesh.scale.z = 5;
+
+	mesh.rotation.x = 0;
+	mesh.rotation.y = 0;
+	mesh.rotation.z = 0;
+
+	mesh.translation.x = 15.0f;
+	mesh.translation.y = 15.0f;
+	mesh.translation.z = 30.0f;
 }
 
 Mesh::~Mesh()
@@ -51,7 +62,7 @@ void Mesh::load_obj_file_data(char* filename)
 					vi[0],
 					vi[1],
 					vi[2],
-					0xFFFF0000
+					random_color()
 				};
 
 				mesh.faces.push_back(f);
@@ -69,17 +80,9 @@ void Mesh::update_mesh()
 	if (angle > 360) angle = 0;
 	angle += 1;
 
-	mesh.scale.x = 5;
-	mesh.scale.y = 5;
-	mesh.scale.z = 5;
-	
-	mesh.translation.x = 15.0f;
-	mesh.translation.y = 15.0f;
-	mesh.translation.z = 30.0f;
-
 	Mat4x4 scale = Mat4x4_MakeScale(mesh.scale.x, mesh.scale.y, mesh.scale.z);
-	Mat4x4 rotateY = Mat4x4_MakeRotationY(mesh.rotation.y);
 	Mat4x4 rotateX = Mat4x4_MakeRotationX(mesh.rotation.x);
+	Mat4x4 rotateY = Mat4x4_MakeRotationY(mesh.rotation.y);
 	Mat4x4 rotateZ = Mat4x4_MakeRotationZ(mesh.rotation.z);
 	Mat4x4 translation = Mat4x4_MakeTranslation(mesh.translation.x, mesh.translation.y, mesh.translation.z);
 
@@ -118,6 +121,31 @@ void Mesh::update_mesh()
 			transformed_vertices[j] = transformed_vertex;
 		}
 
+		// Famoso backface
+		if (display->drawing_type == BACKFACE_TYPE::CULLING) {
+			vect3<float> vector_a = vec3_from_vec4(transformed_vertices[0]);
+			vect3<float> vector_b = vec3_from_vec4(transformed_vertices[1]);
+			vect3<float> vector_c = vec3_from_vec4(transformed_vertices[2]);
+
+			vect3<float> vector_ab = vsubvect(vector_b, vector_a);
+			vect3<float> vector_ac = vsubvect(vector_c, vector_a);
+			vnormalize(&vector_ab);
+			vnormalize(&vector_ac);
+
+			vect3<float> normal = vcrossvect(vector_ab, vector_ac);
+			vnormalize(&normal);
+
+			vect3<float> camera_ray = vsubvect(camera->point, vector_a);
+
+			float dot_normal_camera = vdotvect(normal, camera_ray);
+
+			if (dot_normal_camera < 0) {
+				continue;
+			}
+		}
+
+		
+
 		vect4<float> projected_points[3];
 		for (int j = 0; j < 3; j++)
 		{
@@ -149,15 +177,29 @@ void Mesh::draw_mesh(Drawing &draw)
 	for (int i = 0; i < n_triangles; i++)
 	{
 		triangle triangle = triangles_to_render[i];
-		draw.draw_triangle(
-			triangle.points[0].x,
-			triangle.points[0].y,
-			triangle.points[1].x,
-			triangle.points[1].y,
-			triangle.points[2].x,
-			triangle.points[2].y,
-			0xFFFFFF00
-		);
+		if (display->draw_mode == DRAW_MODE::NOFILL || display->draw_mode == DRAW_MODE::FILLED_LINES ) {
+			draw.draw_triangle(
+				triangle.points[0].x,
+				triangle.points[0].y,
+				triangle.points[1].x,
+				triangle.points[1].y,
+				triangle.points[2].x,
+				triangle.points[2].y,
+				color
+			);
+		}
+		
+		if (display->draw_mode == DRAW_MODE::FILLED || display->draw_mode == DRAW_MODE::FILLED_LINES) {
+			draw.fill_triangle(
+				triangle.points[0].x,
+				triangle.points[0].y,
+				triangle.points[1].x,
+				triangle.points[1].y,
+				triangle.points[2].x,
+				triangle.points[2].y,
+				triangle.color
+			);
+		}
 	}
 
 	triangles_to_render.clear();
@@ -166,6 +208,57 @@ void Mesh::draw_mesh(Drawing &draw)
 void Mesh::set_display(Display* display)
 {
 	this->display = display;
+}
+
+void Mesh::set_camera(Camera* camera)
+{
+	this->camera = camera;
+}
+
+void Mesh::set_color(uint32_t color)
+{
+	this->color = color;
+}
+
+uint32_t Mesh::get_color()
+{
+	return color;
+}
+
+void Mesh::set_translation(vect3<float> translation)
+{
+	mesh.translation.x = translation.x;
+	mesh.translation.y = translation.y;
+	mesh.translation.z = translation.z;
+}
+
+void Mesh::set_scale(vect3<float> scale)
+{
+	mesh.scale.x = scale.x;
+	mesh.scale.y = scale.y;
+	mesh.scale.z = scale.z;
+}
+
+void Mesh::set_rotate(vect3<float> rotation)
+{
+	mesh.rotation.x = rotation.x;
+	mesh.rotation.y = rotation.y;
+	mesh.rotation.z = rotation.z;
+}
+
+vect3<float>* Mesh::get_translation()
+{
+	return &mesh.translation;
+}
+
+vect3<float>* Mesh::get_scale()
+{
+	return &mesh.scale;
+}
+
+vect3<float>* Mesh::get_rotate()
+{
+	return &mesh.rotation;
 }
 
 void Mesh::set_rotate_mesh_x(float angle_x)

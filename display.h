@@ -13,11 +13,23 @@ typedef struct {
 	float aspect;
 } Camera;
 
+enum BACKFACE_TYPE {
+	CULLING = 0,
+	NONBACKFACE
+};
+
+enum DRAW_MODE {
+	FILLED = 0,
+	NOFILL,
+	FILLED_LINES
+};
+
 class Display
 {
 	public:
 		Camera camera;
-
+		BACKFACE_TYPE drawing_type = BACKFACE_TYPE::CULLING;
+		DRAW_MODE draw_mode = DRAW_MODE::NOFILL;
 		// largura da janela em pixels
 		int width;
 		// altura da janela em pixels
@@ -43,6 +55,7 @@ class Display
 		SDL_Renderer* get_renderer();
 		SDL_Window* get_window();
 		SDL_Texture* get_texture();
+		Camera* get_camera();
 
 		// atualiza a tela apos as escritas
 		inline void sdl_render_present() { SDL_RenderPresent(this->renderer); };

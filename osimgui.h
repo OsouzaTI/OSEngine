@@ -19,10 +19,13 @@ class OSImgui
         void set_texture(SDL_Texture* texture);
         void set_event(SDL_Event* event);
         void set_scene(std::vector<Shape*>* scene);
+        void set_mesh(Mesh* mesh);
+        void set_display(Display* display);
         void set_scene_controller(OSceneController* scene_controller);
         void clear_glcolor();
-        void create_layout();
+        void create_layout(int type);
         void update_shape(int index);
+        void update_mesh(int index);
 	private:
 		OSImgui();
 		~OSImgui();
@@ -32,6 +35,7 @@ class OSImgui
         SDL_Renderer* renderer;
         SDL_Texture* texture;
         SDL_GLContext gl_context;
+        Display* display;
         bool show_demo_window = true;
         bool show_another_window = false;       
         // Main loop
@@ -39,11 +43,13 @@ class OSImgui
 
         OSceneController* scene_controller;
         std::vector<Shape*>* scene;
+        Mesh* mesh;
 
         //Transform Scale
         int current_selected = -1;
         float transform_scale[3]{ 0 ,0, 0 };
         float transform_rotate[3]{ 0 ,0, 0 };
+        float transform_translation[3]{ 0 ,0, 0 };
         float color[4]{ 0 ,0, 0, 1 };
 
         //Variables ImGui
@@ -54,16 +60,29 @@ class OSImgui
         ImGuiID dock_id_left;
         ImGuiID dock_id_top;
         ImGuiID dock_id_right;
+        ImGuiID dock_id_right_top;
         ImGuiID dock_id_bottom;
-
+        int layout_type = -1;
         // GUI widgets
+        char buffer[64];
+        int  numberbuffer = 0;
+        int color_buffer[4]{ 0, 0, 0, 0 };
+        bool backface_mode_controll = true;
+        bool draw_mode_controll = true;
+        bool draw_mode_lines_controll = false;
         void menu_bar();
         void sideleft_menu();
         void sideright_menu();
         void bottom_logs();
         void central_view();
+        void backface_mode();
+        void draw_docking();
 
+        // popup menus
+        void create_shapes();
 
+        // separate windows imgui
+        void draw_transforms();
 
 };
 
@@ -101,42 +120,190 @@ void OSImgui::menu_bar()
 
 void OSImgui::sideright_menu()
 {
-    ImGui::SetNextWindowBgAlpha(1);
     ImGui::Begin("Properties");
         
     ImGui::Text("Transform Scale");
-    ImGui::SliderFloat3("Scale", transform_scale, 0, 1);
+    ImGui::SliderFloat3("Scale", transform_scale, 0, 10);
     ImGui::Separator();
     ImGui::Text("Transform Rotation");
     ImGui::SliderFloat3("Rotate", transform_rotate, -PI, PI);
     ImGui::Separator();
+    ImGui::Text("Transform Translation");
+    ImGui::SliderFloat3("Translation", transform_translation, 0, 30);
+    ImGui::Separator();
     ImGui::Text("Change Color");
-    ImGui::ColorEdit4("Color", color); 
-    
+    ImGui::ColorPicker4("Color", color); 
+    ImGui::Separator();
+    ImGui::InputInt4("Color ARGB", color_buffer);
+    ImGui::Separator();
+    backface_mode();
+
 
     ImGui::End();
 }
 
 void OSImgui::bottom_logs()
 {
-    ImGui::SetNextWindowBgAlpha(1);
     ImGui::Begin("Logs");
     ImGui::Text("OLA");
     ImGui::End();
 }
 
 void OSImgui::central_view()
-{    
+{        
     ImGui::Begin("Central");
-     //ImGui::Image(texture, {1200 , 800});
+
     ImGui::End();
+}
+
+void OSImgui::backface_mode()
+{
+    if (ImGui::Checkbox("BackFace Culling", &backface_mode_controll)) {
+        if (!backface_mode_controll) {
+            display->drawing_type = BACKFACE_TYPE::NONBACKFACE;
+        }
+        else {
+            display->drawing_type = BACKFACE_TYPE::CULLING;
+        }
+    }
+    ImGui::Separator();
+    char buf[64];
+    sprintf(buf, "Draw mode[%s]", draw_mode_controll ? "NOFILL" : "FILLED");
+    if (ImGui::Checkbox(buf, &draw_mode_controll)) {
+        if (!draw_mode_controll) {
+            display->draw_mode = DRAW_MODE::FILLED;
+        }
+        else {
+            display->draw_mode = DRAW_MODE::NOFILL;
+        }
+    }
+    ImGui::Separator();
+    if (ImGui::Checkbox("Filled with Lines [IMPORTANT]", &draw_mode_lines_controll)) {
+        if (draw_mode_lines_controll) {
+            display->draw_mode = DRAW_MODE::FILLED_LINES;
+        }
+        else {
+            display->draw_mode = DRAW_MODE::NOFILL;
+        }
+    }
+}
+
+void OSImgui::draw_docking()
+{
+    ImGui::NewFrame();
+
+    dockspace_id = ImGui::GetID("MyDockspace");
+
+    ImGuiViewport* viewport = ImGui::GetMainViewport();
+    ImGui::SetNextWindowPos(viewport->Pos);
+    ImGui::SetNextWindowSize(viewport->Size);
+    ImGui::SetNextWindowViewport(viewport->ID);
+
+    ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar;
+    window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove;
+    window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+    //window_flags |= ImGuiWindowFlags_Popup;
+
+    ImGui::SetNextWindowBgAlpha(0);
+
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+    ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+    ImGui::Begin("Dock", 0, window_flags);
+    ImGui::PopStyleVar(3);
+    menu_bar();
+    if (!isDocked)
+        create_layout(2);
+
+    if (open) {
+        if (layout_type == 1) {
+            ImGui::DockSpace(dockspace_id);
+            sideleft_menu();
+            sideright_menu();
+            central_view();
+            bottom_logs();
+        }
+        else if (layout_type == 2) {
+            ImGui::DockSpace(dockspace_id);
+            central_view();
+            ImGui::SetNextWindowBgAlpha(1);
+            sideright_menu();
+            ImGui::SetNextWindowBgAlpha(1);
+            sideleft_menu();
+        }
+    }
+    else {
+        ImGui::ShowDemoWindow();
+    }
+
+
+    ImGui::End();
+}
+
+void OSImgui::create_shapes()
+{
+    if (ImGui::BeginPopupModal("Stacked 1", NULL, ImGuiWindowFlags_MenuBar))
+    {
+        if (ImGui::BeginMenuBar())
+        {
+            if (ImGui::BeginMenu("File"))
+            {
+                if (ImGui::MenuItem("Some menu item")) {}
+                ImGui::EndMenu();
+            }
+            ImGui::EndMenuBar();
+        }
+        
+        static char name[32] = "Label1";        
+        ImGui::Text("Edit name:");
+        ImGui::InputText("##edit", name, IM_ARRAYSIZE(name));
+
+        ImGui::InputInt("radius", &numberbuffer);
+        if (ImGui::Button("Create")) {
+            scene_controller->add<Ellipse>(name,
+                vect3<float>{ 0, 0, 0 },
+                vect3<float>{ 1, 1, 1 },
+                vect3<float>{ 0, 0, 0 },
+                numberbuffer
+            );            
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+
+    if (ImGui::BeginPopupContextWindow("item context menu"))
+    {
+        bool openPopup = false;
+        if (ImGui::Selectable("New Ellipse")) {
+            logstd("Create a ellipse");
+            openPopup = true;            
+        }        
+        if (ImGui::Selectable("Clear all")) {
+            scene->clear();
+        }                
+        ImGui::EndPopup();            
+        if(openPopup) ImGui::OpenPopup("Stacked 1");
+    }    
+
+
+}
+
+void OSImgui::draw_transforms()
+{
+    ImGui::NewFrame();
+    sideright_menu();   
+    sideleft_menu();
 }
 
 void OSImgui::sideleft_menu()
 {
-    ImGui::SetNextWindowBgAlpha(1);
     ImGui::Begin("Objects");
+    create_shapes();
     static int selected = -1;
+    if (ImGui::Selectable("Mesh", selected == -99)) {
+        selected = -99;
+    }
+        
     int n = 0;
     for (auto& _scene : *scene) {
         char buf[32];
@@ -146,6 +313,7 @@ void OSImgui::sideleft_menu()
         n++;
     }
     update_shape(selected);    
+    update_mesh(selected);    
     ImGui::End();
 }
 
@@ -164,54 +332,20 @@ void OSImgui::pool_events()
     // 5 dias
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiWindowFlags_NoMove;    
     io.ConfigWindowsResizeFromEdges = true;
-    int mouseX, mouseY;
+    int mouseX, mouseY, keyboard_key;
     const int buttons = SDL_GetMouseState(&mouseX, &mouseY);
+    const Uint8* keyboard = SDL_GetKeyboardState(NULL);
     io.MousePos = ImVec2(mouseX, mouseY);
     io.MouseDown[0] = buttons & SDL_BUTTON(SDL_BUTTON_LEFT);
-    io.MouseDown[1] = buttons & SDL_BUTTON(SDL_BUTTON_RIGHT);
+    io.MouseDown[1] = buttons & SDL_BUTTON(SDL_BUTTON_RIGHT);    
+    io.KeyMap[ImGuiKey_Backspace] = 42;
+    event->type = NULL;
 }
 
 void OSImgui::draw()
 {
     pool_events();
-
-	ImGui::NewFrame();
-
-        dockspace_id = ImGui::GetID("MyDockspace");
-
-        ImGuiViewport* viewport = ImGui::GetMainViewport();
-        ImGui::SetNextWindowPos(viewport->Pos);
-        ImGui::SetNextWindowSize(viewport->Size);
-        ImGui::SetNextWindowViewport(viewport->ID);
-
-        ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar;
-        window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoMove;
-        window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-
-        ImGui::SetNextWindowBgAlpha(0);  
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-        ImGui::Begin("Dock", 0, window_flags);
-        ImGui::PopStyleVar(3);
-        menu_bar();
-        if (!isDocked)
-            create_layout();
-
-    if (open) {
-        ImGui::DockSpace(dockspace_id);
-        sideleft_menu();
-        sideright_menu();
-        central_view();
-        bottom_logs();
-    }
-    else {
-        ImGui::ShowDemoWindow();
-    }
-    
-    
-    ImGui::End();
+    draw_docking();
     ImGui::Render();
     ImGuiSDL::Render(ImGui::GetDrawData());
 }
@@ -249,6 +383,16 @@ void OSImgui::set_scene(std::vector<Shape*>* scene)
     this->scene = scene;
 }
 
+void OSImgui::set_mesh(Mesh* mesh)
+{
+    this->mesh = mesh;
+}
+
+void OSImgui::set_display(Display* display)
+{
+    this->display = display;
+}
+
 void OSImgui::set_scene_controller(OSceneController* scene_controller)
 {
     this->scene_controller = scene_controller;
@@ -259,24 +403,41 @@ void OSImgui::clear_glcolor()
    
 }
 
-void OSImgui::create_layout()
+void OSImgui::create_layout(int type)
 {
-    logstd("Dockspace created");
-    ImGui::DockBuilderRemoveNode(dockspace_id); // Clear out existing layout
-    ImGui::DockBuilderAddNode(dockspace_id); // Add empty node
+    if (type == 1) {
+        logstd("Dockspace 1 created");
+        ImGui::DockBuilderRemoveNode(dockspace_id); // Clear out existing layout
+        ImGui::DockBuilderAddNode(dockspace_id); // Add empty node
 
-    dock_main_id = dockspace_id; // This variable will track the document node, however we are not using it here as we aren't docking anything into it.
-    dock_id_left    = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.20f, NULL, &dock_main_id);
-    dock_id_top     = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Up, 0.80f, NULL, &dock_main_id);
-    dock_id_right   = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.20f, NULL, &dock_main_id);
-    dock_id_bottom  = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.20f, NULL, &dock_main_id);
+        dock_main_id = dockspace_id; // This variable will track the document node, however we are not using it here as we aren't docking anything into it.
+        dock_id_left    = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Left, 0.20f, NULL, &dock_main_id);
+        dock_id_top     = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Up, 0.80f, NULL, &dock_main_id);
+        dock_id_right   = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.20f, NULL, &dock_main_id);
+        dock_id_bottom  = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Down, 0.20f, NULL, &dock_main_id);
    
-    ImGui::DockBuilderDockWindow("Central", dock_main_id);
-    ImGui::DockBuilderDockWindow("Objects", dock_id_left);
-    ImGui::DockBuilderDockWindow("James_2", dock_id_top);
-    ImGui::DockBuilderDockWindow("Properties", dock_id_right);
-    ImGui::DockBuilderDockWindow("Logs", dock_id_bottom);
-    ImGui::DockBuilderFinish(dockspace_id);
+        ImGui::DockBuilderDockWindow("Central", dock_main_id);
+        ImGui::DockBuilderDockWindow("Objects", dock_id_left);
+        ImGui::DockBuilderDockWindow("James_2", dock_id_top);
+        ImGui::DockBuilderDockWindow("Properties", dock_id_right);
+        ImGui::DockBuilderDockWindow("Logs", dock_id_bottom);
+        ImGui::DockBuilderFinish(dockspace_id);
+    }
+    else if (type = 2) {
+        logstd("Dockspace 1 created");
+        ImGui::DockBuilderRemoveNode(dockspace_id); // Clear out existing layout
+        ImGui::DockBuilderAddNode(dockspace_id); // Add empty node
+
+        dock_main_id = dockspace_id; // This variable will track the document node, however we are not using it here as we aren't docking anything into it.
+        dock_id_right = ImGui::DockBuilderSplitNode(dock_main_id, ImGuiDir_Right, 0.20f, NULL, &dock_main_id);
+        dock_id_right_top = ImGui::DockBuilderSplitNode(dock_id_right, ImGuiDir_Up, 0.20f, NULL, &dock_id_right);
+
+        ImGui::DockBuilderDockWindow("Central", dock_main_id);
+        ImGui::DockBuilderDockWindow("Properties", dock_id_right);
+        ImGui::DockBuilderDockWindow("Objects", dock_id_right_top);
+        ImGui::DockBuilderFinish(dockspace_id);
+    }
+    layout_type = type;
     isDocked = true;
 
 }
@@ -295,18 +456,49 @@ void OSImgui::update_shape(int index)
         transform_rotate[0] = rotate->x;
         transform_rotate[1] = rotate->y;
         transform_rotate[2] = rotate->z;
+        color[2] = fcolor.x;
+        color[1] = fcolor.y;
+        color[0] = fcolor.z;
+        color[3] = fcolor.w;
+        current_selected = index;
+    }
+    scene->at(index)->set_color(rgb_to_hex(color[3] * 255, color[0] * 255, color[1] * 255, color[2] * 255));
+    vect3<float> _scale{ transform_scale[0], transform_scale[1],  transform_scale[2] };
+    vect3<float> _rotate{ transform_rotate[0], transform_rotate[1],  transform_rotate[2] };
+    scene_controller->update(index, { 0, 0, 0 }, _scale, _rotate);
+}
+
+void OSImgui::update_mesh(int index)
+{
+    if (index != -99) return;
+    if (current_selected != index) {
+        vect3<float>* scale = mesh->get_scale();
+        vect3<float>* rotate = mesh->get_rotate();
+        vect3<float>* translation = mesh->get_translation();        
+        transform_scale[0] = scale->x;
+        transform_scale[1] = scale->y;
+        transform_scale[2] = scale->z;
+        transform_rotate[0] = rotate->x;
+        transform_rotate[1] = rotate->y;
+        transform_rotate[2] = rotate->z;
+        transform_translation[0] = translation->x;
+        transform_translation[1] = translation->y;
+        transform_translation[2] = translation->z;
+        uint32_t _color = mesh->get_color();
+        ImVec4 fcolor = ImGui::ColorConvertU32ToFloat4(_color);
         color[0] = fcolor.x;
         color[1] = fcolor.y;
         color[2] = fcolor.z;
         color[3] = fcolor.w;
         current_selected = index;
     }
-    scene->at(index)->set_color(
-        color32_reverse(ImGui::ColorConvertFloat4ToU32(ImVec4{color[0], color[1], color[2], color[3]}))
-    );
+    mesh->set_color(rgb_to_hex(color[3]*255, color[0]*255, color[1]*255, color[2]*255));
+    vect3<float> _translation{ transform_translation[0], transform_translation[1],  transform_translation[2] };
     vect3<float> _scale{ transform_scale[0], transform_scale[1],  transform_scale[2] };
     vect3<float> _rotate{ transform_rotate[0], transform_rotate[1],  transform_rotate[2] };
-    scene_controller->update(index, { 0, 0, 0 }, _scale, _rotate);
+    mesh->set_translation(_translation);
+    mesh->set_scale(_scale);
+    mesh->set_rotate(_rotate);
 }
 
 #endif // !OSIMGUI_H

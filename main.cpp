@@ -1,6 +1,6 @@
-#include "os_engine.h"
+#include "osrenderer.h"
 
-class Janela : public OSEngine
+class Janela : public OSRenderer
 {
 	public:
 		Janela() {};
@@ -20,18 +20,7 @@ class Janela : public OSEngine
 void Janela::engine_main() {
 	create_window("Janela", 1200, 800);		
 	GUI->add<TransformInput>("Teste",10, 10);	
-
-	for (int i = 0; i < 3; i++) {
-		char buffer[32];
-		sprintf(buffer, "Elipse %d", i);
-		SCENE->add<Ellipse>(
-			buffer,
-			vect3<float>{ 1.0f, 1.0f, 1.0f },
-			vect3<float>{ 1.0f, 1.0f, 1.0f },
-			vect3<float>{ 0.0f, 0.0f, 0.0f }, 100.0f);
-	}
-
-
+	mesh.load_obj_file_data("F:\\Projects\\cpp\\OSEngine\\obj_files\\f22.obj");
 	create_camera(
 		{0, 0, 0},
 		{0, 0 ,0},
@@ -63,12 +52,11 @@ void Janela::update()
 {
 	frame_rate_control();	
 	SDL_GetMouseState(&position_mouse_x, &position_mouse_y);	
+	mesh.update_mesh();
 }
 
 void Janela::render() {	
-	
-
-
+	mesh.draw_mesh(draw);
 }
 
 int main(int argv, char** args) {	

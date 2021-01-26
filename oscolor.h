@@ -71,12 +71,21 @@ namespace Pallets {
 
 }
 
-static uint32_t rgb_to_hex(int r, int g, int b) {
+static uint32_t rgb_to_hex(int a, int r, int g, int b) {
 	r = r > 255 ? 255 : r;
 	g = g > 255 ? 255 : g;
-	b = b > 255 ? 255 : b;	
+	b = b > 255 ? 255 : b;
+	return ((a & 0xff) << 24) + ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+	//return ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
+}
+
+static uint32_t _rgb_to_hex(int r, int g, int b) {
+	r = r > 255 ? 255 : r;
+	g = g > 255 ? 255 : g;
+	b = b > 255 ? 255 : b;
 	return ((r & 0xff) << 16) + ((g & 0xff) << 8) + (b & 0xff);
 }
+
 
 static vect3<float> hex_to_rgb(uint32_t hex_color) {
 	vect3<float> color;
@@ -94,6 +103,21 @@ static uint32_t color32_reverse(uint32_t x)
 		((x & 0x00FF0000) >> 8) | //____RR__
 		((x & 0x0000FF00) << 8) | //__GG____
 		((x & 0x000000FF) << 24);  //BB______
+}
+
+static uint32_t rgba_to_argb(uint32_t x)
+{
+	return	(x & 0xff) + ((x & 0xff) << 16) + ((x & 0xff) << 8);
+}
+
+static uint32_t random_color()
+{
+
+	int r = rand() % 255;
+	int g = rand() % 255;
+	int b = rand() % 255;
+
+	return _rgb_to_hex(r, g, b);
 }
 
 #endif // !OSCOLOR_H

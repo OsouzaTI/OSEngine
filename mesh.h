@@ -44,11 +44,26 @@ class Mesh
         void draw_mesh(Drawing& draw);
 
         void set_display(Display* display);
+        void set_camera(Camera* camera);
+        void set_color(uint32_t color);
+        uint32_t get_color();
+
+        void set_translation(vect3<float> translation);
+        void set_scale(vect3<float> scale);
+        void set_rotate(vect3<float> rotation);
+        
+        vect3<float>* get_translation();
+        vect3<float>* get_scale();
+        vect3<float>* get_rotate();
+
+
         void set_rotate_mesh_x(float angle_x);
         void set_rotate_mesh_y(float angle_y);
         void set_rotate_mesh_z(float angle_z);
     private:        
         Display* display;
+        Camera* camera;
+        uint32_t color = C_WHITE;
 };
 
 #endif

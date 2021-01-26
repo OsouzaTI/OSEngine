@@ -23,6 +23,11 @@ void Drawing::set_display(Display* display)
 	this->display = display;
 }
 
+void Drawing::set_camera(Camera* camera)
+{
+    this->camera = camera;
+}
+
 void Drawing::draw_pixel(int x, int y, uint32_t color)
 {
     if (x >= 0 && x < this->display->width && y >= 0 && y < this->display->height) {         
@@ -210,6 +215,67 @@ void Drawing::fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int
         x_start -= inv_slope_1;
         x_end -= inv_slope_2;
     }
+}
+
+void Drawing::fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color) {
+    float dot_prod = back_face_culling(x0, y0, x1, y1, x2, y2);
+
+    if (y0 > y1) {
+        Math::swap(&y0, &y1);
+        Math::swap(&x0, &x1);
+    }
+    if (y1 > y2) {
+        Math::swap(&y1, &y2);
+        Math::swap(&x1, &x2);
+    }
+    if (y0 > y1) {
+        Math::swap(&y0, &y1);
+        Math::swap(&x0, &x1);
+    }
+
+
+    if (y1 == y2) {
+        // Draw flat-bottom triangle
+        fill_flat_bottom_triangle(x0, y0, x1, y1, x2, y2, color);
+    }
+    else if (y0 == y1) {
+        // Draw flat-top triangle
+        fill_flat_top_triangle(x0, y0, x1, y1, x2, y2, color);
+    }
+    else {
+
+        //vec2_t mid = GeoMath::triangle_mid_point(t);
+        int My = y1;
+        int Mx = (((x2 - x0) * (y1 - y0)) / (y2 - y0)) + x0;
+        // Draw flat-bottom triangle
+        fill_flat_bottom_triangle(x0, y0, x1, y1, Mx, My, color);
+        // Draw flat-top triangle
+        fill_flat_top_triangle(x1, y1, Mx, My, x2, y2, color);
+
+    }
+
+}
+
+float Drawing::back_face_culling(int x0, int y0, int x1, int y1, int x2, int y2) {
+
+    vect3<float> a{ x0, y0 };
+    vect3<float> b{ x1, y1 };
+    vect3<float> c{ x2, y2 };
+
+    //subtract vector A B
+    vect3<float> ab = vsubvect(b, a);
+    vect3<float> ac = vsubvect(c, a);
+    vnormalize(&ab);
+    vnormalize(&ac);
+
+    // Cross product 
+    vect3<float> normal = vcrossvect(ab, ac);
+    vnormalize(&normal);
+
+    vect3<float> camera_ray = vsubvect(camera->point, a);
+    float dot_normal_camera = vdotvect(normal, camera_ray);
+
+    return dot_normal_camera;
 }
 
 void Drawing::draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)

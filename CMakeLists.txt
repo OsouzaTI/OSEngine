@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(OSEngine)
+project(OSRenderer)
 
 set(sources
     main.cpp
@@ -22,9 +22,9 @@ set(sources
 
 
 
-add_executable(OSEngine ${sources} "display.h"
+add_executable(OSRenderer ${sources} "display.h"
 "display.cpp"
-"os_engine.h"
+"osrenderer.h"
 "keyboard.h"
 "drawing.h"
 "drawing.cpp"
@@ -41,16 +41,16 @@ add_executable(OSEngine ${sources} "display.h"
 "oscene_controller.h")
 
 
-target_include_directories(OSEngine PRIVATE deps/SDL2/include
+target_include_directories(OSRenderer PRIVATE deps/SDL2/include
                                             deps/SDL2_TTF/include        
                                             deps/GLEW/include
                                             imgui)
 
-target_link_directories(OSEngine PRIVATE deps/SDL2/lib/x86  
+target_link_directories(OSRenderer PRIVATE deps/SDL2/lib/x86  
                                          deps/GLEW/lib
                                          deps/SDL2_TTF/lib)
 
-target_link_libraries(OSEngine PRIVATE opengl32.lib
+target_link_libraries(OSRenderer PRIVATE opengl32.lib
                                      SDL2.lib                                     
                                      SDL2main.lib
                                      SDL2_ttf.lib                                     

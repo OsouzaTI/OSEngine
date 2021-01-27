@@ -26,6 +26,8 @@ class OSImgui
         void create_layout(int type);
         void update_shape(int index);
         void update_mesh(int index);
+        void update_light(int index);
+        void play_angle_amimation(bool x, bool y, bool z);
 	private:
 		OSImgui();
 		~OSImgui();
@@ -47,9 +49,18 @@ class OSImgui
 
         //Transform Scale
         int current_selected = -1;
+        float step_animation = 0.01f;
+        bool animation_controller[3]{ 0, 0, 0 };
+        float angle_animation_x = 0.0f;
+        float angle_animation_y = 0.0f;
+        float angle_animation_z = 0.0f;
         float transform_scale[3]{ 0 ,0, 0 };
         float transform_rotate[3]{ 0 ,0, 0 };
         float transform_translation[3]{ 0 ,0, 0 };
+        float transform_shear[2]{ 0 ,0 };
+        // light
+        float light_position[3]{ 0 ,0, 0 };
+
         float color[4]{ 0 ,0, 0, 1 };
 
         //Variables ImGui
@@ -68,8 +79,11 @@ class OSImgui
         int  numberbuffer = 0;
         int color_buffer[4]{ 0, 0, 0, 0 };
         bool backface_mode_controll = true;
-        bool draw_mode_controll = true;
-        bool draw_mode_lines_controll = false;
+        bool shading_mode_controll = false;
+        bool draw_mode_fill_controll = false;
+        bool draw_mode_wireframe_controll = false;
+        bool draw_mode_textured_controll = false;
+        bool draw_mode_textured_wireframe_controll = false;
         void menu_bar();
         void sideleft_menu();
         void sideright_menu();
@@ -122,6 +136,14 @@ void OSImgui::sideright_menu()
 {
     ImGui::Begin("Properties");
         
+    ImGui::Text("Animation rotate");
+    ImGui::SliderFloat("Step per sec", &step_animation, 0.01f, 1.0f);
+    ImGui::Checkbox("X:", &animation_controller[0]);
+    ImGui::SameLine();
+    ImGui::Checkbox("Y:", &animation_controller[1]);
+    ImGui::SameLine();
+    ImGui::Checkbox("Z:", &animation_controller[2]);    
+    ImGui::Separator();
     ImGui::Text("Transform Scale");
     ImGui::SliderFloat3("Scale", transform_scale, 0, 10);
     ImGui::Separator();
@@ -129,7 +151,16 @@ void OSImgui::sideright_menu()
     ImGui::SliderFloat3("Rotate", transform_rotate, -PI, PI);
     ImGui::Separator();
     ImGui::Text("Transform Translation");
-    ImGui::SliderFloat3("Translation", transform_translation, 0, 30);
+    ImGui::SliderFloat3("Translation", transform_translation, -30, 30);
+    ImGui::Separator();    
+    ImGui::Text("Transform Shear");
+    ImGui::SliderFloat("ShearXY", &transform_shear[0], -PI, PI);
+    ImGui::SliderFloat("ShearYX", &transform_shear[1], -PI, PI);
+    ImGui::Separator();
+    ImGui::Text("Light Position XY");
+    ImGui::SliderFloat2("World Position", light_position, 0, 1200);
+    ImGui::Text("Light Position Z");
+    ImGui::SliderFloat("World Position", &light_position[2], -100, 100);
     ImGui::Separator();
     ImGui::Text("Change Color");
     ImGui::ColorPicker4("Color", color); 
@@ -158,6 +189,7 @@ void OSImgui::central_view()
 
 void OSImgui::backface_mode()
 {
+
     if (ImGui::Checkbox("BackFace Culling", &backface_mode_controll)) {
         if (!backface_mode_controll) {
             display->drawing_type = BACKFACE_TYPE::NONBACKFACE;
@@ -166,26 +198,55 @@ void OSImgui::backface_mode()
             display->drawing_type = BACKFACE_TYPE::CULLING;
         }
     }
+    
+    if (ImGui::Checkbox("FLAT SHADING", &shading_mode_controll)) {
+        if (shading_mode_controll) {
+            display->shading = SHADING_TYPE::FLAT;
+        }
+        else {
+            display->shading = SHADING_TYPE::DISABLED;
+        }
+    }
+
     ImGui::Separator();
-    char buf[64];
-    sprintf(buf, "Draw mode[%s]", draw_mode_controll ? "NOFILL" : "FILLED");
-    if (ImGui::Checkbox(buf, &draw_mode_controll)) {
-        if (!draw_mode_controll) {
+    if (ImGui::Checkbox("FILLED", &draw_mode_fill_controll)) {
+        if (draw_mode_fill_controll) {
             display->draw_mode = DRAW_MODE::FILLED;
         }
-        else {
-            display->draw_mode = DRAW_MODE::NOFILL;
+    }
+
+    ImGui::SameLine();
+    if (ImGui::Checkbox("WIREFRAME", &draw_mode_wireframe_controll)) {
+        if (draw_mode_wireframe_controll) {
+            display->draw_mode = DRAW_MODE::WIREFRAME;
         }
     }
+
     ImGui::Separator();
-    if (ImGui::Checkbox("Filled with Lines [IMPORTANT]", &draw_mode_lines_controll)) {
-        if (draw_mode_lines_controll) {
-            display->draw_mode = DRAW_MODE::FILLED_LINES;
-        }
-        else {
-            display->draw_mode = DRAW_MODE::NOFILL;
+    if (ImGui::Checkbox("TEXTURED", &draw_mode_textured_controll)) {
+        if (draw_mode_textured_controll) {
+            display->draw_mode = DRAW_MODE::TEXTURED;
         }
     }
+
+    ImGui::Separator();
+    if (ImGui::Checkbox("TEXTURED WIREFRAME", &draw_mode_textured_wireframe_controll)) {
+        if (draw_mode_textured_wireframe_controll) {
+            display->draw_mode = DRAW_MODE::TEXTURED_WIREFRAME;
+        }
+    }
+
+    // if there is none checked
+    if(
+        !draw_mode_fill_controll &&
+        !draw_mode_wireframe_controll &&
+        !draw_mode_textured_controll &&
+        !draw_mode_textured_wireframe_controll
+        )
+    {
+        display->draw_mode = DRAW_MODE::WIREFRAME;
+    }
+
 }
 
 void OSImgui::draw_docking()
@@ -303,6 +364,10 @@ void OSImgui::sideleft_menu()
     if (ImGui::Selectable("Mesh", selected == -99)) {
         selected = -99;
     }
+
+    if (ImGui::Selectable("Light", selected == -98)) {
+        selected = -98;
+    }
         
     int n = 0;
     for (auto& _scene : *scene) {
@@ -313,7 +378,9 @@ void OSImgui::sideleft_menu()
         n++;
     }
     update_shape(selected);    
-    update_mesh(selected);    
+    update_mesh(selected);  
+    update_light(selected);
+    play_angle_amimation(animation_controller[0], animation_controller[1], animation_controller[2]);
     ImGui::End();
 }
 
@@ -499,6 +566,48 @@ void OSImgui::update_mesh(int index)
     mesh->set_translation(_translation);
     mesh->set_scale(_scale);
     mesh->set_rotate(_rotate);
+    mesh->set_shearXY(transform_shear[0]);
+    mesh->set_shearYX(transform_shear[1]);
+}
+
+void OSImgui::update_light(int index)
+{
+    if (index != -98) return;
+    GlobalLight* light = GlobalLight::get_instance();
+    if (current_selected != index) {
+        vect3<float>* scale = mesh->get_scale();
+        vect3<float>* rotate = mesh->get_rotate();
+        vect3<float>* translation = mesh->get_translation();
+        light_position[0] = light->light.direction.x;
+        light_position[1] = light->light.direction.y;
+        light_position[2] = light->light.direction.z;
+        current_selected = index;
+    }
+    vect3<float> _light_position{ light_position[0], light_position[1], light_position[2] };
+    light->set_position(_light_position);
+}
+
+void OSImgui::play_angle_amimation(bool x, bool y, bool z)
+{
+    angle_animation_x += step_animation;
+    angle_animation_y += step_animation;
+    angle_animation_z += step_animation;
+    if (angle_animation_z > TWO_PI) angle_animation_z = 0;
+    if (angle_animation_y > TWO_PI) angle_animation_y = 0;
+    if (angle_animation_x > TWO_PI) angle_animation_x = 0;
+
+    if (x) {
+        mesh->set_rotate_mesh_x(angle_animation_x);
+    }
+    
+    if (y) {
+        mesh->set_rotate_mesh_y(angle_animation_y);
+    }
+    
+    if (z) {
+        mesh->set_rotate_mesh_z(angle_animation_z);
+    }
+
 }
 
 #endif // !OSIMGUI_H

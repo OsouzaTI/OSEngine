@@ -38,7 +38,7 @@ add_executable(OSRenderer ${sources} "display.h"
 "oscolor.h"
 "osfont.h"
 "osimgui.h"
-"oscene_controller.h")
+"oscene_controller.h" "light.h" "light.cpp" "texture.h" "triangle.h" "triangle.cpp")
 
 
 target_include_directories(OSRenderer PRIVATE deps/SDL2/include

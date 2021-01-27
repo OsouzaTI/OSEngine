@@ -20,13 +20,14 @@ class Janela : public OSRenderer
 void Janela::engine_main() {
 	create_window("Janela", 1200, 800);		
 	GUI->add<TransformInput>("Teste",10, 10);	
-	mesh.load_obj_file_data("F:\\Projects\\cpp\\OSEngine\\obj_files\\f22.obj");
+	mesh.load_cube_object();
 	create_camera(
 		{0, 0, 0},
 		{0, 0 ,0},
 		60.0f,
 		0.1f,
-		100.0f		
+		100.0f,
+		(float)window_height()/window_width()
 	);
 
 }
@@ -56,7 +57,7 @@ void Janela::update()
 }
 
 void Janela::render() {	
-	mesh.draw_mesh(draw);
+	mesh.draw_mesh();
 }
 
 int main(int argv, char** args) {	

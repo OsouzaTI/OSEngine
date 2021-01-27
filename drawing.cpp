@@ -1,7 +1,9 @@
+#include <iostream>
 #include "drawing.h"
 #include "osmath.h"
-#include <iostream>
+#include "triangle.h"
 
+#include "texture.h"
 
 Drawing::Drawing() {
 	this->display = NULL;
@@ -15,7 +17,7 @@ Display* Drawing::get_display()
 
 int Drawing::pixel(int x, int y)
 {
-	return ((this->display->width * y) + x);
+	return ((this->display->view_port.width * y) + x);
 }
 
 void Drawing::set_display(Display* display)
@@ -23,20 +25,37 @@ void Drawing::set_display(Display* display)
 	this->display = display;
 }
 
-void Drawing::set_camera(Camera* camera)
+void Drawing::set_light(Light* light)
 {
-    this->camera = camera;
+    this->light = light;
 }
 
-void Drawing::draw_pixel(int x, int y, uint32_t color)
+void Drawing::draw_pixel(int x, int y, color_t color)
 {
-    if (x >= 0 && x < this->display->width && y >= 0 && y < this->display->height) {         
-        uint32_t* color_buffer = this->display->get_color_buffer();
+    if (x >= 0 && x < this->display->view_port.width && y >= 0 && y < this->display->view_port.height) {
+        color_t* color_buffer = this->display->get_color_buffer();
         color_buffer[pixel(x, y)] = color;
     }
 }
 
-void Drawing::draw_rect(int x, int y, int w, int h, int border_size, uint32_t color) {
+void Drawing::draw_texel(int x, int y, uint32_t* texture, int x0, int y0, int x1, int y1, int x2, int y2, float u0, float v0, float u1, float v1, float u2, float v2)
+{
+    vect3<float> weights = TriangleHelper::barycentric_weights(x, y, x0, y0, x1, y1, x2, y2);
+    float alpha = weights.x;
+    float beta  = weights.y;
+    float gamma = weights.z;
+
+    float interpolated_u = u0 * alpha + u1 * beta + u2 * gamma;
+    float interpolated_v = v0 * alpha + v1 * beta + v2 * gamma;
+
+    unsigned int texture_x = abs(static_cast<int>(interpolated_u * texture_width));
+    unsigned int texture_y = abs(static_cast<int>(interpolated_v * texture_height));
+    
+    draw_pixel(x, y, texture[(texture_width * texture_y) + texture_x]);
+
+}
+
+void Drawing::draw_rect(int x, int y, int w, int h, int border_size, color_t color) {
 
     for (int yy = 0; yy < h; yy++)
     {
@@ -58,7 +77,7 @@ void Drawing::draw_rect(int x, int y, int w, int h, int border_size, uint32_t co
 
 }
 
-void Drawing::draw_fill_rect(int x, int y, int w, int h, uint32_t color) {
+void Drawing::draw_fill_rect(int x, int y, int w, int h, color_t color) {
 
     for (int yy = 0; yy < h; yy++)
     {
@@ -72,7 +91,7 @@ void Drawing::draw_fill_rect(int x, int y, int w, int h, uint32_t color) {
 
 }
 
-void Drawing::draw_circle(int x, int y, int radius, uint32_t color) {
+void Drawing::draw_circle(int x, int y, int radius, color_t color) {
 
     int xx = 0;
     int yy = radius;
@@ -115,7 +134,7 @@ void Drawing::draw_circle(int x, int y, int radius, uint32_t color) {
 
 // Draw line algorithm DDA
 // comments in draw line are portuguese
-void Drawing::draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
+void Drawing::draw_line(int x0, int y0, int x1, int y1, color_t color) {
     // calcula os deltas respectivos
     int delta_x = (x1 - x0);
     int delta_y = (y1 - y0);
@@ -138,7 +157,7 @@ void Drawing::draw_line(int x0, int y0, int x1, int y1, uint32_t color) {
 
 }
 
-void Drawing::draw_line_border(int x0, int y0, int x1, int y1, int border_size, uint32_t color) {
+void Drawing::draw_line_border(int x0, int y0, int x1, int y1, int border_size, color_t color) {
     // para saber o que o algoritmo esta fazendo
     // verifique a função draw_line
 
@@ -175,7 +194,7 @@ void Drawing::draw_line_border(int x0, int y0, int x1, int y1, int border_size, 
 
 }
 
-void Drawing::draw_grid(int grid_size, uint32_t color) {
+void Drawing::draw_grid(int grid_size, color_t color) {
     for (int i = 0; i < this->display->width; i += grid_size)
     {
         for (int j = 0; j < this->display->height; j += grid_size)
@@ -185,7 +204,7 @@ void Drawing::draw_grid(int grid_size, uint32_t color) {
     }
 }
 
-void Drawing::fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
+void Drawing::fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, int y2, color_t color)
 {
     float inv_slope_1 = (float)(x1 - x0) / (y1 - y0);
     float inv_slope_2 = (float)(x2 - x0) / (y2 - y0);
@@ -201,7 +220,7 @@ void Drawing::fill_flat_bottom_triangle(int x0, int y0, int x1, int y1, int x2, 
     }
 }
 
-void Drawing::fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
+void Drawing::fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int y2, color_t color)
 {
     float inv_slope_1 = (float)(x2 - x0) / (y2 - y0);
     float inv_slope_2 = (float)(x2 - x1) / (y2 - y1);
@@ -217,8 +236,8 @@ void Drawing::fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int
     }
 }
 
-void Drawing::fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color) {
-    float dot_prod = back_face_culling(x0, y0, x1, y1, x2, y2);
+void Drawing::fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2, color_t color) {
+    float dot_prod = TriangleHelper::back_face_culling(x0, y0, x1, y1, x2, y2);
 
     if (y0 > y1) {
         Math::swap(&y0, &y1);
@@ -256,36 +275,14 @@ void Drawing::fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint
 
 }
 
-float Drawing::back_face_culling(int x0, int y0, int x1, int y1, int x2, int y2) {
-
-    vect3<float> a{ x0, y0 };
-    vect3<float> b{ x1, y1 };
-    vect3<float> c{ x2, y2 };
-
-    //subtract vector A B
-    vect3<float> ab = vsubvect(b, a);
-    vect3<float> ac = vsubvect(c, a);
-    vnormalize(&ab);
-    vnormalize(&ac);
-
-    // Cross product 
-    vect3<float> normal = vcrossvect(ab, ac);
-    vnormalize(&normal);
-
-    vect3<float> camera_ray = vsubvect(camera->point, a);
-    float dot_normal_camera = vdotvect(normal, camera_ray);
-
-    return dot_normal_camera;
-}
-
-void Drawing::draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
+void Drawing::draw_triangle(int x0, int y0, int x1, int y1, int x2, int y2, color_t color)
 {
     draw_line(x0, y0, x1, y1, color);
     draw_line(x1, y1, x2, y2, color);
     draw_line(x2, y2, x0, y0, color);
 }
 
-void Drawing::draw_fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2, uint32_t color)
+void Drawing::draw_fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2, color_t color)
 {
     if (y0 > y1) {
         Math::swap(&y0, &y1);
@@ -320,6 +317,87 @@ void Drawing::draw_fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
         fill_flat_top_triangle(x1, y1, Mx, My, x2, y2, color);
 
     }
+}
+
+void Drawing::draw_textured_triangle(int x0, int y0, float u0, float v0, int x1, int y1, float u1, float v1, int x2, int y2, float u2, float v2, uint32_t* texture)
+{
+    // we need to sort the vertices by y-coodinates ascending (y0 < y1 < y2)
+    if (y0 > y1) {
+        Math::swap<int>(&y0, &y1);
+        Math::swap<int>(&x0, &x1);
+        Math::swap<float>(&u0, &u1);
+        Math::swap<float>(&v0, &v1);
+    }
+    if (y1 > y2) {
+        Math::swap<int>(&y1, &y2);
+        Math::swap<int>(&x1, &x2);
+        Math::swap<float>(&u1, &u2);
+        Math::swap<float>(&v1, &v2);
+    }
+    if (y0 > y1) {
+        Math::swap<int>(&y0, &y1);
+        Math::swap<int>(&x0, &x1);
+        Math::swap<float>(&u0, &u1);
+        Math::swap<float>(&v0, &v1);
+    }
+    // render the upper part of the triangle (flat-bottom)
+    float inv_slop_1 = 0;
+    float inv_slop_2 = 0;
+    if (y1 - y0 != 0) inv_slop_1 = (float)(x1 - x0) / abs(y1 - y0);
+    if (y2 - y0 != 0) inv_slop_2 = (float)(x2 - x0) / abs(y2 - y0);
+
+    if (y1 - y0 != 0) {
+        for (int y = y0; y <= y1; y++)
+        {
+            int start_x = static_cast<int>(x1 + (y - y1) * inv_slop_1);
+            int end_x = static_cast<int>(x0 + (y - y0) * inv_slop_2);
+
+            if (end_x < start_x) Math::swap<int>(&start_x, &end_x);
+
+            for (int x = start_x; x < end_x; x++)
+            {
+                draw_texel(
+                    x, y, texture,
+                    x0, y0, // point_a
+                    x1, y1, // point_b
+                    x2, y2, // point_c
+                    u0, v0,
+                    u1, v1,
+                    u2, v2
+                );
+            }
+        }
+    }
+
+    // render the bottom part of the triangle (flat-top)
+    inv_slop_1 = 0;
+    inv_slop_2 = 0;
+    if (y2 - y1 != 0) inv_slop_1 = (float)(x2 - x1) / abs(y2 - y1);
+    if (y2 - y0 != 0) inv_slop_2 = (float)(x2 - x0) / abs(y2 - y0);
+
+    if (y2 - y1 != 0) {
+        for (int y = y1; y <= y2; y++)
+        {
+            int start_x = static_cast<int>(x1 + (y - y1) * inv_slop_1);
+            int end_x = static_cast<int>(x0 + (y - y0) * inv_slop_2);
+
+            if (end_x < start_x) Math::swap<int>(&start_x, &end_x);
+
+            for (int x = start_x; x < end_x; x++)
+            {
+                draw_texel(
+                    x, y, texture,
+                    x0, y0, // point_a
+                    x1, y1, // point_b
+                    x2, y2, // point_c
+                    u0, v0,
+                    u1, v1,
+                    u2, v2
+                );
+            }
+        }
+    }
+
 }
 
 ImplicitLine Drawing::implicit_line(int x1, int y1, int x2, int y2)
@@ -349,7 +427,7 @@ int Drawing::implicit_line_winding_number(ImplicitLine implicit_line, int x, int
     return 0;
 }
 
-void Drawing::draw_implicit_line(int x1, int y1, int x2, int y2, uint32_t color)
+void Drawing::draw_implicit_line(int x1, int y1, int x2, int y2, color_t color)
 {
     ImplicitLine _implicit_line = implicit_line(x1, y1, x2, y2);
     for (int x = 0; x < this->display->width; x++)

@@ -3,15 +3,33 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 #include "vector.h"
+#include "light.h"
 
-typedef struct {
+typedef struct Camera {
 	vect3<float> point;
 	vect3<float> rotate;
 	float fov;
 	float znear;
 	float zfar;
 	float aspect;
+
+	Camera() {};
+	Camera(vect3<float> point, vect3<float> rotate, float fov, float znear, float zfar, float aspect)
+	{
+		this->point = point;
+		this->rotate = rotate;
+		this->fov = fov;
+		this->znear = znear;
+		this->zfar = zfar;
+		this->aspect = aspect;
+	}
+
 } Camera;
+
+typedef struct {
+	int width;
+	int height;	
+} WindowViewPort;
 
 enum BACKFACE_TYPE {
 	CULLING = 0,
@@ -19,17 +37,20 @@ enum BACKFACE_TYPE {
 };
 
 enum DRAW_MODE {
-	FILLED = 0,
-	NOFILL,
-	FILLED_LINES
+	WIREFRAME = 0,
+	FILLED,
+	TEXTURED,
+	TEXTURED_WIREFRAME
 };
 
 class Display
 {
 	public:
-		Camera camera;
+		WindowViewPort view_port;
+		static Camera* camera;
 		BACKFACE_TYPE drawing_type = BACKFACE_TYPE::CULLING;
-		DRAW_MODE draw_mode = DRAW_MODE::NOFILL;
+		DRAW_MODE draw_mode = DRAW_MODE::WIREFRAME;
+		SHADING_TYPE shading = SHADING_TYPE::DISABLED;
 		// largura da janela em pixels
 		int width;
 		// altura da janela em pixels
@@ -41,10 +62,10 @@ class Display
 		~Display();
 		
 		// Calculo de pixel para limpar a tela ( clear_buffer ) 
-		inline int pixel(int x, int y) { return ((this->width * y) + x); };		
+		inline int pixel(int x, int y) { return ((view_port.width * y) + x); };
 
 		// inicia a janela
-		bool init_window(const char* title, int width, int height);
+		bool init_window(const char* title, int width, int height, int wview_port, int hview_port);
 		// inicia os buffers e variaveis
 		void setup_window();
 		// desenha no buffer

@@ -3,18 +3,29 @@
 
 #include <vector>
 #include "vector.h"
+#include "matrix.h"
 #include "drawing.h"
+#include "texture.h"
+
+typedef struct {
+    float u;
+    float v;
+} UVtext;
 
 typedef struct {
     int a;
     int b;
     int c;
+    UVtext a_uv;
+    UVtext b_uv;
+    UVtext c_uv;
     uint32_t color;
 } face;
 
 
 typedef struct {
     vect2<float> points[3];
+    UVtext textcoords[3];
     uint32_t color;
     float avg_depth;
 
@@ -38,19 +49,22 @@ class Mesh
 
         mesh_t mesh;
         std::vector<triangle> triangles_to_render;
-
+        
+        void load_cube_object();
         void load_obj_file_data(char* filename);        
         void update_mesh();
-        void draw_mesh(Drawing& draw);
+        void draw_mesh();
 
         void set_display(Display* display);
-        void set_camera(Camera* camera);
         void set_color(uint32_t color);
+        void set_drawing(Drawing* drawing);
         uint32_t get_color();
 
         void set_translation(vect3<float> translation);
         void set_scale(vect3<float> scale);
         void set_rotate(vect3<float> rotation);
+        void set_shearXY(float angle);
+        void set_shearYX(float angle);
         
         vect3<float>* get_translation();
         vect3<float>* get_scale();
@@ -62,8 +76,12 @@ class Mesh
         void set_rotate_mesh_z(float angle_z);
     private:        
         Display* display;
-        Camera* camera;
+        Drawing* draw;
+        vect3<float> cube_vertices[8];
+        face cube_faces[12];
         uint32_t color = C_WHITE;
+        Mat4x4 shearXY_matrix;
+        Mat4x4 shearYX_matrix;
 };
 
 #endif

@@ -228,7 +228,7 @@ template<typename T> vect3<T> vcrossvect(vect3<T> &u, vect3<T> &v) {
 }
 
 template<typename T> T vdotvect(vect3<T> &u, vect3<T> &v) {
-	return (u.x * v.x + u.y * v.y + u.z * v.z);
+	return (u.x * v.x) + (u.y * v.y) + (u.z * v.z);
 }
 
 
@@ -294,12 +294,12 @@ template<typename T> vect2<T> ovprojection(vect4<T> &u) {
 	};
 }
 
-template<typename T> float vlenght(vect3<T>& u) {
+template<typename T> T vlenght(vect3<T>& u) {
 	return sqrtf(u.x * u.x + u.y * u.y + u.z * u.z);
 }
 
 template<typename T> void vnormalize(vect3<T>* u) {
-	float lenght = vlenght(*u);
+	float lenght = vlenght<T>(*u);
 	u->x /= lenght;
 	u->y /= lenght;
 	u->z /= lenght;

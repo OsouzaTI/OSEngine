@@ -7,6 +7,8 @@ static SDL_Color CS_WHITE = { 255, 255, 255 };
 static SDL_Color CS_RED = { 255, 0, 0 };
 static SDL_Color CS_GREEN = { 0, 255, 0 };
 
+typedef uint32_t color_t;
+
 enum COLORS {
 	C_WHITE = 0xFFFFFFFF, // white color hex
 	C_BLACK = 0xFF000000, // black color hex
@@ -34,11 +36,11 @@ enum COLORS {
 
 typedef struct 
 {
-	uint32_t color1;
-	uint32_t color2;
-	uint32_t color3;
-	uint32_t color4;
-	uint32_t color5;
+	color_t color1;
+	color_t color2;
+	color_t color3;
+	color_t color4;
+	color_t color5;
 	SDL_Color text_color = CS_WHITE;
 } OSPallet;
 
@@ -118,6 +120,18 @@ static uint32_t random_color()
 	int b = rand() % 255;
 
 	return _rgb_to_hex(r, g, b);
+}
+
+static color_t light_apply_intensity(color_t original_color, float percentage_factor) {
+	if (percentage_factor < 0) percentage_factor = 0;
+	if (percentage_factor > 1) percentage_factor = 1;
+
+
+	color_t a = (original_color & 0xFF000000);
+	color_t r = (original_color & 0x00FF0000) * percentage_factor;
+	color_t g = (original_color & 0x0000FF00) * percentage_factor;
+	color_t b = (original_color & 0x000000FF) * percentage_factor;
+	return a | (r & 0x00FF0000) | (g & 0x0000FF00) | (b & 0x000000FF);
 }
 
 #endif // !OSCOLOR_H

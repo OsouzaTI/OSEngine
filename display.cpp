@@ -2,6 +2,8 @@
 #include <iostream>
 #include <assert.h>
 
+Camera* Display::camera = NULL;
+
 Display::Display()
 {
 	this->color_buffer = NULL;
@@ -22,12 +24,12 @@ Display::~Display()
 {
 }
 
-bool Display::init_window(const char* title, int width, int height)
+bool Display::init_window(const char* title, int width, int height, int wview_port, int hview_port)
 {
 	this->title = title;
 	this->width = width;
 	this->height = height;
-
+	view_port = { wview_port, hview_port };
 	bool success = true;
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -57,7 +59,7 @@ bool Display::init_window(const char* title, int width, int height)
 		success = false;
 	}
 
-	this->renderer = SDL_CreateRenderer(this->window, -1, 0);
+	this->renderer = SDL_CreateRenderer(this->window, -1, 0);		
 
 	if (this->renderer == NULL) {
 		std::cout << "Erro na criação do renderer\n";
@@ -69,7 +71,7 @@ bool Display::init_window(const char* title, int width, int height)
 
 void Display::setup_window()
 {
-	this->color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * this->width * this->height);
+	this->color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * view_port.width * view_port.height);
 	if (color_buffer == NULL) {
 		std::cout << "Error in memory" << std::endl;		
 	}
@@ -78,8 +80,8 @@ void Display::setup_window()
 		this->renderer,
 		SDL_PIXELFORMAT_ARGB8888,
 		SDL_TEXTUREACCESS_TARGET,
-		this->width,
-		this->height
+		view_port.width,
+		view_port.height
 	);
 }
 
@@ -89,16 +91,16 @@ void Display::draw_buffer()
 		this->texture_buffer,
 		NULL,
 		this->color_buffer,
-		static_cast<int>(this->width * sizeof(uint32_t))
+		static_cast<int>(view_port.width * sizeof(uint32_t))
 	);
 	SDL_RenderCopy(this->renderer, this->texture_buffer, NULL, NULL);
 }
 
 void Display::clear_buffer()
 {
-	for (int x = 0; x < this->width; x++)
+	for (int x = 0; x < view_port.width; x++)
 	{
-		for (int y = 0; y < this->height; y++)
+		for (int y = 0; y < view_port.height; y++)
 		{
 			this->color_buffer[pixel(x, y)] = this->default_clear_color_buffer;
 		}
@@ -122,26 +124,26 @@ SDL_Texture* Display::get_texture()
 
 Camera* Display::get_camera()
 {
-	return &camera;
+	return Display::camera;
 }
 
 void Display::create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect)
 {
-	float _aspect = this->height / (float)this->width;
-	if (aspect != NULL) _aspect = aspect;
-	this->camera = {
-		position,
-		rotate,
-		fov,
-		znear,
-		zfar,
-		_aspect
-	};
+	//float _aspect = view_port.height / (float)view_port.width;
+	//if (aspect != NULL) _aspect = aspect;
+	//this->camera = {
+	//	position,
+	//	rotate,
+	//	fov,
+	//	znear,
+	//	zfar,
+	//	_aspect
+	//};
 }
 
 void Display::set_camera_fov(float fov)
 {
-	this->camera.fov = fov;
+	Display::camera->fov = fov;
 }
 
 void Display::set_clear_color_screen(uint32_t color)

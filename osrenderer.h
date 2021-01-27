@@ -1,6 +1,7 @@
 #ifndef OSRENDERER_H
 #define OSRENDERER_H
 
+#include "light.h"
 #include "display.h"
 #include "drawing.h"
 #include "osgui.h"
@@ -25,6 +26,7 @@ class OSRenderer
 		SDL_Event keyboard_event;		
 		Drawing draw;		
 		Mesh mesh;		
+		GlobalLight* light = GlobalLight::get_instance();
 		OSGuiController* GUI = OSGuiController::get_instance();
 		OSImgui* OSIMGUI = OSImgui::get_instance();
 		OSceneController* SCENE = OSceneController::get_instance();
@@ -44,7 +46,6 @@ class OSRenderer
 		inline Uint32 keyboard_event_type() { return this->keyboard_event.type; };
 		inline Uint32 keyboard_event_key() { return this->keyboard_event.key.keysym.sym; };
 
-		void set_camera_to_drivers();
 		void set_frame_rate(int frame_rate);
 		void set_background_color(uint32_t color);
 		void run();
@@ -68,10 +69,13 @@ OSRenderer::OSRenderer(){
 
 	game_loop = false;
 	keyboard_event = SDL_Event();
-	draw.set_display(&this->display);
-	mesh.set_display(&this->display);
 	position_mouse_x = 0;
 	position_mouse_y = 0;
+	draw.set_display(&display);	
+	draw.set_light(&light->light);	
+	mesh.set_display(&display);
+	mesh.set_drawing(&draw);
+
 	OSGui::guidraw = &this->draw;
 	OSGui::default_pallet = Pallets::sky_blue_rutvi;
 	Shape::shapedraw = &this->draw;		
@@ -88,7 +92,7 @@ OSRenderer::~OSRenderer(){
 
 void OSRenderer::create_window(const char* title, int width, int height)
 {
-	this->game_loop = this->display.init_window(title, width, height);	
+	this->game_loop = this->display.init_window(title, width, height, 1200, 800);	
 	this->display.setup_window();	
 	center_screen = { width / 2.0f, height / 2.0f };
 	Shape::center_screen = &center_screen;
@@ -130,12 +134,6 @@ void OSRenderer::frame_rate_control()
 	this->display.frame_rate_control();
 }
 
-void OSRenderer::set_camera_to_drivers()
-{
-	draw.set_camera(display.get_camera());
-	mesh.set_camera(display.get_camera());
-}
-
 void OSRenderer::set_frame_rate(int frame_rate)
 {
 	this->display.set_frame_rate(frame_rate);
@@ -150,13 +148,13 @@ void OSRenderer::run()
 {
 	engine_main();
 	OSIMGUI->setup(); // setup imgui
-	while (this->game_loop) {		
+	while (this->game_loop) {	
 		process_input();
 
 		clear_screen();
 		update();
+		draw.draw_circle(light->light.direction.x, light->light.direction.y, 10, C_RED);
 		render();
-
 		// update screen
 		update_render();
 	}
@@ -179,13 +177,7 @@ Display* OSRenderer::get_display()
 
 void OSRenderer::create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect)
 {
-	if (aspect != NULL)
-		this->display.create_camera(position, rotate, fov, znear, zfar, aspect);
-	else
-		this->display.create_camera(position, rotate, fov, znear, zfar);
-	
-	// set the camera pointer again 
-	set_camera_to_drivers();
+	Display::camera = new Camera(position, rotate, fov, znear, zfar, aspect);		
 }
 
 void OSRenderer::set_camera_fov(float fov)

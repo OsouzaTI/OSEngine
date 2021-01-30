@@ -6,30 +6,36 @@ Camera* Display::camera = NULL;
 
 Display::Display()
 {
-	this->color_buffer = NULL;
-	this->renderer = NULL;
-	this->texture_buffer = NULL;
-	this->window = NULL;
-	this->title = "undefined";
-	this->width = 0;
-	this->height = 0;
-	this->default_clear_color_buffer = 0xFF000000;
-	this->previous_frame_time = 0;
-	this->frame_target_time = 1000.0f/60;
-	this->frame_rate = 0.0f;
-	this->buffer_title = new char[200];	
+	color_buffer = NULL;
+	renderer = NULL;
+	texture_buffer = NULL;
+	window = NULL;
+	title = "undefined";
+	width = 0;
+	height = 0;
+	default_clear_color_buffer = 0xFF000000;
+	previous_frame_time = 0;
+	frame_target_time = 1000.0f/60;
+	frame_rate = 0.0f;
+	buffer_title = new char[200];	
+
+	frustum = FrustumPlane::get_instance();
+
 }
 
 Display::~Display()
 {
+	free(color_buffer);
+	free(z_buffer);
 }
 
-bool Display::init_window(const char* title, int width, int height, int wview_port, int hview_port)
+bool Display::init_window(const char* title, int width, int height, int wview_port, int hview_port, GUI_MODE mode)
 {
 	this->title = title;
 	this->width = width;
 	this->height = height;
 	view_port = { wview_port, hview_port };
+	gui_mode = mode;
 	bool success = true;
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
@@ -72,13 +78,14 @@ bool Display::init_window(const char* title, int width, int height, int wview_po
 void Display::setup_window()
 {
 	this->color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * view_port.width * view_port.height);
-	if (color_buffer == NULL) {
+	this->z_buffer	   = (float*)malloc(sizeof(float) * view_port.width * view_port.height);
+	if (color_buffer == NULL && z_buffer != NULL) {
 		std::cout << "Error in memory" << std::endl;		
 	}
 
 	this->texture_buffer = SDL_CreateTexture(
 		this->renderer,
-		SDL_PIXELFORMAT_ARGB8888,
+		SDL_PIXELFORMAT_RGBA32,
 		SDL_TEXTUREACCESS_TARGET,
 		view_port.width,
 		view_port.height
@@ -103,6 +110,17 @@ void Display::clear_buffer()
 		for (int y = 0; y < view_port.height; y++)
 		{
 			this->color_buffer[pixel(x, y)] = this->default_clear_color_buffer;
+		}
+	}
+}
+
+void Display::clear_z_buffer()
+{
+	for (int x = 0; x < view_port.width; x++)
+	{
+		for (int y = 0; y < view_port.height; y++)
+		{
+			this->z_buffer[pixel(x, y)] = 1.0f;
 		}
 	}
 }
@@ -156,6 +174,11 @@ uint32_t* Display::get_color_buffer()
 	return this->color_buffer;
 }
 
+float* Display::get_z_buffer()
+{
+	return z_buffer;
+}
+
 void Display::frame_rate_control() {
 
 	int time_to_wait = frame_target_time - (SDL_GetTicks() - previous_frame_time);
@@ -164,6 +187,8 @@ void Display::frame_rate_control() {
 
 	this->frame_rate = 1000.0f / (SDL_GetTicks() - previous_frame_time);
 	//this->frame_rate = (SDL_GetTicks() - previous_frame_time);
+
+	delta_time = (SDL_GetTicks() - previous_frame_time) / 1000.0f;
 
 	previous_frame_time = SDL_GetTicks();
 	sprintf(this->buffer_title, "%s | FPS: %.3f | FRT: %.3f ", this->title, this->frame_rate, this->frame_target_time);

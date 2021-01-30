@@ -1,6 +1,6 @@
 #include <iostream>
 #include "drawing.h"
-#include "osmath.h"
+#include "math.h"
 #include "triangle.h"
 
 #include "texture.h"
@@ -17,12 +17,15 @@ Display* Drawing::get_display()
 
 int Drawing::pixel(int x, int y)
 {
-	return ((this->display->view_port.width * y) + x);
+    int index = ((this->display->view_port.width * y) + x);
+    index = Math::clamp<int>(index, 0, number_of_pixels);
+	return index;
 }
 
 void Drawing::set_display(Display* display)
 {
 	this->display = display;
+    number_of_pixels = display->view_port.width * display->view_port.height;
 }
 
 void Drawing::set_light(Light* light)
@@ -38,21 +41,83 @@ void Drawing::draw_pixel(int x, int y, color_t color)
     }
 }
 
-void Drawing::draw_texel(int x, int y, uint32_t* texture, int x0, int y0, int x1, int y1, int x2, int y2, float u0, float v0, float u1, float v1, float u2, float v2)
+// helper to get a update status of current z-buffer
+bool Drawing::update_zbuffer(int x, int y, float value)
+{
+    // get the pointer of z-buffer
+    float* z_buffer = display->get_z_buffer(); 
+    // if value is less of the current position of pixel(x, y)
+    // return a positive status
+    int i = pixel(x, y);
+
+    if (value < z_buffer[pixel(x, y)])
+        return true;    
+    return false;
+}
+
+void Drawing::draw_zpixel(int x, int y, uint32_t color, int x0, int y0, float z0, float w0, int x1, int y1, float z1, float w1, int x2, int y2, float z2, float w2)
 {
     vect3<float> weights = TriangleHelper::barycentric_weights(x, y, x0, y0, x1, y1, x2, y2);
     float alpha = weights.x;
     float beta  = weights.y;
     float gamma = weights.z;
 
-    float interpolated_u = u0 * alpha + u1 * beta + u2 * gamma;
-    float interpolated_v = v0 * alpha + v1 * beta + v2 * gamma;
-
-    unsigned int texture_x = abs(static_cast<int>(interpolated_u * texture_width));
-    unsigned int texture_y = abs(static_cast<int>(interpolated_v * texture_height));
+    float interpolated_inverse_w =
+        (1 / w0) * alpha +
+        (1 / w1) * beta +
+        (1 / w2) * gamma;
     
-    draw_pixel(x, y, texture[(texture_width * texture_y) + texture_x]);
+    interpolated_inverse_w = 1.0f - interpolated_inverse_w;
 
+    if (update_zbuffer(x, y, interpolated_inverse_w)) {
+        draw_pixel(x, y, color);                
+        float* z_buffer = display->get_z_buffer();
+        z_buffer[pixel(x, y)] = interpolated_inverse_w;
+    }
+
+}
+
+void Drawing::draw_texel(
+    int x, int y, OSTexture* texture,
+    int x0, int y0, float z0, float w0,
+    int x1, int y1, float z1, float w1,
+    int x2, int y2, float z2, float w2,
+    float u0, float v0,
+    float u1, float v1,
+    float u2, float v2
+)
+{
+    vect3<float> weights = TriangleHelper::barycentric_weights(x, y, x0, y0, x1, y1, x2, y2);
+    float alpha = weights.x;
+    float beta  = weights.y;
+    float gamma = weights.z;
+
+    // interpolate u using barycentric coordinates
+    float interpolated_u = (u0 / w0) * alpha + (u1 / w1) * beta + (u2 / w2) * gamma;
+    // interpolate v using barycentric coordinates
+    float interpolated_v = (v0 / w0) * alpha + (v1 / w1) * beta + (v2 / w2) * gamma;
+    // interpolate the inverse of w using barycentric coordinates
+    float interpolated_inverse_w =
+        (1 / w0) * alpha +
+        (1 / w1) * beta +
+        (1 / w2) * gamma;
+    // now we can divide back both interpolated values by 1/w
+    interpolated_u /= interpolated_inverse_w;
+    interpolated_v /= interpolated_inverse_w;
+
+    unsigned int texture_x = abs(static_cast<int>(interpolated_u * texture->texture_width)) % texture->texture_width;
+    unsigned int texture_y = abs(static_cast<int>(interpolated_v * texture->texture_height)) % texture->texture_height;
+    unsigned int index_texture = (texture->texture_width * texture_y) + texture_x;
+    // invert value
+    interpolated_inverse_w = 1.0f - interpolated_inverse_w;
+
+    // TODO bug index overflow FIX
+    // update the z-buffer value with 1/w of this current pixel
+    if (update_zbuffer(x, y, interpolated_inverse_w)) {
+        draw_pixel(x, y, texture->mesh_texture[index_texture]);
+        float* z_buffer = display->get_z_buffer();
+        z_buffer[pixel(x, y)] = interpolated_inverse_w;
+    }    
 }
 
 void Drawing::draw_rect(int x, int y, int w, int h, int border_size, color_t color) {
@@ -319,27 +384,125 @@ void Drawing::draw_fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2,
     }
 }
 
-void Drawing::draw_textured_triangle(int x0, int y0, float u0, float v0, int x1, int y1, float u1, float v1, int x2, int y2, float u2, float v2, uint32_t* texture)
+void Drawing::draw_zbuffer_fill_triangle(
+    int x0, int y0, float z0, float w0,
+    int x1, int y1, float z1, float w1,
+    int x2, int y2, float z2, float w2,
+    color_t color
+)
 {
     // we need to sort the vertices by y-coodinates ascending (y0 < y1 < y2)
     if (y0 > y1) {
         Math::swap<int>(&y0, &y1);
         Math::swap<int>(&x0, &x1);
+        Math::swap<float>(&z0, &z1);
+        Math::swap<float>(&w0, &w1);
+    }
+    if (y1 > y2) {
+        Math::swap<int>(&y1, &y2);
+        Math::swap<int>(&x1, &x2);
+        Math::swap<float>(&z1, &z2);
+        Math::swap<float>(&w1, &w2);
+    }
+    if (y0 > y1) {
+        Math::swap<int>(&y0, &y1);
+        Math::swap<int>(&x0, &x1);
+        Math::swap<float>(&z0, &z1);
+        Math::swap<float>(&w0, &w1);
+    }
+    
+    // render the upper part of the triangle (flat-bottom)
+    float inv_slop_1 = 0;
+    float inv_slop_2 = 0;
+    if (y1 - y0 != 0) inv_slop_1 = (float)(x1 - x0) / abs(y1 - y0);
+    if (y2 - y0 != 0) inv_slop_2 = (float)(x2 - x0) / abs(y2 - y0);
+
+    if (y1 - y0 != 0) {
+        for (int y = y0; y <= y1; y++)
+        {
+            int start_x = static_cast<int>(x1 + (y - y1) * inv_slop_1);
+            int end_x = static_cast<int>(x0 + (y - y0) * inv_slop_2);
+
+            if (end_x < start_x) Math::swap<int>(&start_x, &end_x);
+
+            for (int x = start_x; x < end_x; x++)
+            {
+                draw_zpixel(
+                    x, y, color,
+                    x0, y0, z0, w0, // point_a
+                    x1, y1, z1, w1,// point_b
+                    x2, y2, z2, w2// point_c
+                );
+            }
+        }
+    }
+
+    // render the bottom part of the triangle (flat-top)
+    inv_slop_1 = 0;
+    inv_slop_2 = 0;
+    if (y2 - y1 != 0) inv_slop_1 = (float)(x2 - x1) / abs(y2 - y1);
+    if (y2 - y0 != 0) inv_slop_2 = (float)(x2 - x0) / abs(y2 - y0);
+
+    if (y2 - y1 != 0) {
+        for (int y = y1; y <= y2; y++)
+        {
+            int start_x = static_cast<int>(x1 + (y - y1) * inv_slop_1);
+            int end_x   = static_cast<int>(x0 + (y - y0) * inv_slop_2);
+
+            if (end_x < start_x) Math::swap<int>(&start_x, &end_x);
+
+            for (int x = start_x; x < end_x; x++)
+            {
+                draw_zpixel(
+                    x, y, color,
+                    x0, y0, z0, w0, // point_a
+                    x1, y1, z1, w1, // point_b
+                    x2, y2, z2, w2  // point_c
+                );
+            }
+        }
+    }
+
+}
+
+void Drawing::draw_textured_triangle(
+    int x0, int y0, float z0, float w0, float u0, float v0,
+    int x1, int y1, float z1, float w1, float u1, float v1,
+    int x2, int y2, float z2, float w2, float u2, float v2,
+    OSTexture* texture
+)
+{
+    // we need to sort the vertices by y-coodinates ascending (y0 < y1 < y2)
+    if (y0 > y1) {
+        Math::swap<int>(&y0, &y1);
+        Math::swap<int>(&x0, &x1);
+        Math::swap<float>(&z0, &z1);
+        Math::swap<float>(&w0, &w1);
         Math::swap<float>(&u0, &u1);
         Math::swap<float>(&v0, &v1);
     }
     if (y1 > y2) {
         Math::swap<int>(&y1, &y2);
         Math::swap<int>(&x1, &x2);
+        Math::swap<float>(&z1, &z2);
+        Math::swap<float>(&w1, &w2);
         Math::swap<float>(&u1, &u2);
         Math::swap<float>(&v1, &v2);
     }
     if (y0 > y1) {
         Math::swap<int>(&y0, &y1);
         Math::swap<int>(&x0, &x1);
+        Math::swap<float>(&z0, &z1);
+        Math::swap<float>(&w0, &w1);
         Math::swap<float>(&u0, &u1);
         Math::swap<float>(&v0, &v1);
     }
+
+    // flip the V component to account for inverted UV-coordinates (V grows downwards)
+    v0 = 1.0f - v0;
+    v1 = 1.0f - v1;
+    v2 = 1.0f - v2;
+
     // render the upper part of the triangle (flat-bottom)
     float inv_slop_1 = 0;
     float inv_slop_2 = 0;
@@ -358,9 +521,9 @@ void Drawing::draw_textured_triangle(int x0, int y0, float u0, float v0, int x1,
             {
                 draw_texel(
                     x, y, texture,
-                    x0, y0, // point_a
-                    x1, y1, // point_b
-                    x2, y2, // point_c
+                    x0, y0, z0, w0, // point_a
+                    x1, y1, z1, w1,// point_b
+                    x2, y2, z2, w2,// point_c
                     u0, v0,
                     u1, v1,
                     u2, v2
@@ -387,9 +550,9 @@ void Drawing::draw_textured_triangle(int x0, int y0, float u0, float v0, int x1,
             {
                 draw_texel(
                     x, y, texture,
-                    x0, y0, // point_a
-                    x1, y1, // point_b
-                    x2, y2, // point_c
+                    x0, y0, z0, w0, // point_a
+                    x1, y1, z1, w1,// point_b
+                    x2, y2, z2, w2,// point_c
                     u0, v0,
                     u1, v1,
                     u2, v2

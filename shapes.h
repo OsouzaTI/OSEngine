@@ -4,7 +4,7 @@
 #include "matrix.h"
 #include "vector.h"
 #include "drawing.h"
-#include "osgui.h"
+#include "gui.h"
 
 class Shape
 {
@@ -47,7 +47,7 @@ vect2<float>* Shape::center_screen = NULL;
 int Shape::count_shapes = 0;
 
 void Shape::set_color(uint32_t color) {
-	logstd(color);
+	LOG(color);
 	this->color = color;
 }
 
@@ -79,7 +79,12 @@ vect3<float>* Shape::get_scale()
 
 void Shape::set_rotation(vect3<float> rotation)
 {
-	vect3<float> _rotation{ RAD(rotation.x), RAD(rotation.y), RAD(rotation.z) };
+	vect3<float> _rotation(
+		RAD(rotation.x),
+		RAD(rotation.y),
+		RAD(rotation.z)
+	);
+
 	this->rotation = rotation;
 }
 

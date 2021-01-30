@@ -22,6 +22,7 @@ enum OS_KEYBOARD_KEY {
 	BT_KEY_D = SDLK_d,
 	BT_KEY_A = SDLK_a,
 	BT_KEY_B = SDLK_b,
+	BT_KEY_W = SDLK_w,	
 };
 
 enum OS_TEXT {

@@ -40,6 +40,14 @@ struct vect3 {
 	T x;
 	T y;
 	T z;
+
+	vect3<T>() {}
+	vect3<T>(T x, T y, T z) {
+		this->x = x;
+		this->y = y;
+		this->z = z;
+	}
+
 } ;
 
 template<typename T>
@@ -77,6 +85,42 @@ vect3<T> operator+(const vect3<T> u, const vect3<T> v) {
 		u.x + v.x,
 		u.y + v.y,
 		u.z + v.z,
+	};
+}
+
+template<typename T>
+vect3<T> operator+=(const vect3<T> u, const vect3<T> v) {
+	return vect3<T>{
+		u.x + v.x,
+		u.y + v.y,
+		u.z + v.z,
+	};
+}
+
+template<typename T>
+vect3<T> operator-=(const vect3<T> u, const vect3<T> v) {
+	return vect3<T>{
+		u.x - v.x,
+		u.y - v.y,
+		u.z - v.z,
+	};
+}
+
+template<typename T>
+vect3<T> operator*=(const vect3<T> u, const vect3<T> v) {
+	return vect3<T>{
+		u.x * v.x,
+		u.y * v.y,
+		u.z * v.z,
+	};
+}
+
+template<typename T>
+vect3<T> operator*=(const vect3<T> u, const T s) {
+	return vect3<T>{
+		u.x * s,
+		u.y * s,
+		u.z * s,
 	};
 }
 
@@ -124,6 +168,14 @@ template<typename T> vect2<T> vsumvect(vect2<T> &u, vect2<T> &v) {
 	return vect2<T>{
 		u.x + v.x,
 		u.y + v.y
+	};
+}
+
+template<typename T> vect3<T> vsumvect(vect3<T> &u, vect3<T> &v) {
+	return vect3<T>{
+		u.x + v.x,
+		u.y + v.y,
+		u.z + v.z,
 	};
 }
 

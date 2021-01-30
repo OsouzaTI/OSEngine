@@ -1,6 +1,6 @@
 #include "os_engine.hpp"
 
-class Example : public OSEngine
+class Example : public OSRenderer
 {
 public:
 	Example() {};

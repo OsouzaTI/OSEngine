@@ -1,6 +1,8 @@
 #ifndef MESH_H
 #define MESH_H
 
+#define MAX_TRIANGLES_PER_MESH 40000
+
 #include <vector>
 #include "vector.h"
 #include "matrix.h"
@@ -24,11 +26,10 @@ typedef struct {
 
 
 typedef struct {
-    vect2<float> points[3];
+    vect4<float> points[3];
     UVtext textcoords[3];
     uint32_t color;
     float avg_depth;
-
 } triangle;
 
 typedef struct
@@ -48,10 +49,12 @@ class Mesh
         bool loaded;
 
         mesh_t mesh;
-        std::vector<triangle> triangles_to_render;
-        
+        OSTexture texture;
+        triangle* triangles_to_render;
+        unsigned int number_of_triangles_to_render = 0;
         void load_cube_object();
-        void load_obj_file_data(char* filename);        
+        void load_obj_file_data(char* filename);  
+        void load_obj_file_dataV2(char* filename);
         void update_mesh();
         void draw_mesh();
 

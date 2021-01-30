@@ -152,7 +152,7 @@ vect4<T> Mat4x4_MultiplyVector(Mat4x4& m, vect4<T>& u) {
 }
 
 template<typename T>
-vect4<T> Mat4x4_MultiplyProjectVector(Mat4x4& m, vect4<T>& u) {
+inline vect4<T> Mat4x4_MultiplyProjectVector(Mat4x4& m, vect4<T>& u) {
 	vect4<T> v = Mat4x4_MultiplyVector(m, u);
 	if (v.w != 0) {
 		v.x /= v.w;
@@ -162,5 +162,27 @@ vect4<T> Mat4x4_MultiplyProjectVector(Mat4x4& m, vect4<T>& u) {
 
 	return v;
 }
+
+template<typename T>
+inline Mat4x4 Mat4x4_Look_At(vect3<T>& eye, vect3<T>& target, vect3<T>& up) {
+
+	// compute the forward (x), right (x), and up (y) vectors
+	vect3<T> z = vsubvect<T>(target, eye);
+	vnormalize<T>(&z);
+	vect3<T> x = vcrossvect<T>(up, z);
+	vnormalize<T>(&x);
+	vect3<T> y = vcrossvect<T>(z, x);
+
+	Mat4x4 view_matrix = { {
+		{x.x, x.y, x.z, -vdotvect<T>(x, eye)},
+		{y.x, y.y, y.z, -vdotvect<T>(y, eye)},
+		{z.x, z.y, z.z, -vdotvect<T>(z, eye)},
+		{0, 0, 0, 1},
+	} };
+
+	return view_matrix;
+}
 	
+
+
 #endif // !MATRIX_H

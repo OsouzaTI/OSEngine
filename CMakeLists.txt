@@ -18,41 +18,48 @@ set(sources
     "imgui/imgui_tables.cpp"
     "imgui/imgui_sdl.cpp"
     "imgui/imgui_sdl.h"
+    "upng/upng.h"
+    "upng/upng.c"
 )
 
 
 
-add_executable(OSRenderer ${sources} "display.h"
+add_executable(OSRenderer ${sources}
+"display.h"
 "display.cpp"
-"osrenderer.h"
+"renderer.h"
 "keyboard.h"
 "drawing.h"
 "drawing.cpp"
-"osmath.h"
+"math.h"
 "mesh.h"
 "mesh.cpp"
-"osgui.h"
+"gui.h"
 "mouse.h"
-"osmacros.h"
+"macros.h"
 "shapes.h"
-"oscolor.h"
-"osfont.h"
-"osimgui.h"
-"oscene_controller.h" "light.h" "light.cpp" "texture.h" "triangle.h" "triangle.cpp")
+"color.h"
+"font.h"
+"cimgui.h"
+"scene_controller.h"
+"light.h"
+"light.cpp"
+"texture.h"
+"texture.cpp"
+"triangle.h"
+"triangle.cpp" "camera.h" "clipping.h" "clipping.cpp")
 
 
 target_include_directories(OSRenderer PRIVATE deps/SDL2/include
                                             deps/SDL2_TTF/include        
-                                            deps/GLEW/include
-                                            imgui)
+                                            imgui
+                                            upng)
 
 target_link_directories(OSRenderer PRIVATE deps/SDL2/lib/x86  
-                                         deps/GLEW/lib
                                          deps/SDL2_TTF/lib)
 
 target_link_libraries(OSRenderer PRIVATE opengl32.lib
                                      SDL2.lib                                     
                                      SDL2main.lib
                                      SDL2_ttf.lib                                     
-                                     glew32s.lib                                     
 )

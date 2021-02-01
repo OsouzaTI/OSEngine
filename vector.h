@@ -3,6 +3,13 @@
 
 #include <ostream>
 
+template<typename T>
+struct vect2;
+template<typename T>
+struct vect3;
+template<typename T>
+struct vect4;
+
 
 /*
 	
@@ -13,27 +20,18 @@
 	License: MIT
 */
 
-/*
-__      __       _                   ___  _____
- \ \    / /      | |                 |__ \|  __ \
-  \ \  / /__  ___| |_ ___  _ __ ___     ) | |  | |
-   \ \/ / _ \/ __| __/ _ \| '__/ __|   / /| |  | |
-	\  /  __/ (__| || (_) | |  \__ \  / /_| |__| |
-	 \/ \___|\___|\__\___/|_|  |___/ |____|_____/
-*/
-
 template<typename T>
 struct vect2 {
 	T x;
 	T y;
 
-	vect2<T>(){}
+	vect2<T>() {}
 	vect2<T>(T x, T y) {
 		this->x = x;
 		this->y = y;
 	}
 
-} ;
+};
 
 template<typename T>
 struct vect3 {
@@ -48,7 +46,12 @@ struct vect3 {
 		this->z = z;
 	}
 
-} ;
+	template<typename T>
+	operator vect4<T>() const {
+		return vect4<T>(x, y, z, 1);
+	}
+
+};
 
 template<typename T>
 struct vect4 {
@@ -56,71 +59,38 @@ struct vect4 {
 	T y;
 	T z;
 	T w;
-} ;
 
-template<typename T>
-std::ostream& operator<< (std::ostream& os, vect2<T>& p) {
-	os << "vector2D < x: " << p.x << " , " << "y: " << p.y << " >" << std::endl;
-	return os;
-}
+	vect4<T>() {}
+	vect4<T>(T x, T y, T z, T w) {
+		this->x = x;
+		this->y = y;
+		this->z = z;
+		this->w = w;
+	}
+
+	operator vect3<T>() const {
+		return vect3<T>(x, y, z);
+	}
+
+};
+
+
+/*
+__      __       _                   ___  _____
+ \ \    / /      | |                 |__ \|  __ \
+  \ \  / /__  ___| |_ ___  _ __ ___     ) | |  | |
+   \ \/ / _ \/ __| __/ _ \| '__/ __|   / /| |  | |
+	\  /  __/ (__| || (_) | |  \__ \  / /_| |__| |
+	 \/ \___|\___|\__\___/|_|  |___/ |____|_____/
+*/
+
+
 
 template<typename T>
 vect2<T> operator+(const vect2<T> u, const vect2<T> v) {
 	return vect2<T>{
 		u.x + v.x,
 		u.y + v.y,
-	};
-}
-
-template<typename T>
-std::ostream& operator<< (std::ostream& os, vect3<T>& p) {
-	os << "vector3D <" << p.x << "," << p.y << "," << p.z << ">" << std::endl;
-	return os;
-}
-
-
-template<typename T>
-vect3<T> operator+(const vect3<T> u, const vect3<T> v) {
-	return vect3<T>{
-		u.x + v.x,
-		u.y + v.y,
-		u.z + v.z,
-	};
-}
-
-template<typename T>
-vect3<T> operator+=(const vect3<T> u, const vect3<T> v) {
-	return vect3<T>{
-		u.x + v.x,
-		u.y + v.y,
-		u.z + v.z,
-	};
-}
-
-template<typename T>
-vect3<T> operator-=(const vect3<T> u, const vect3<T> v) {
-	return vect3<T>{
-		u.x - v.x,
-		u.y - v.y,
-		u.z - v.z,
-	};
-}
-
-template<typename T>
-vect3<T> operator*=(const vect3<T> u, const vect3<T> v) {
-	return vect3<T>{
-		u.x * v.x,
-		u.y * v.y,
-		u.z * v.z,
-	};
-}
-
-template<typename T>
-vect3<T> operator*=(const vect3<T> u, const T s) {
-	return vect3<T>{
-		u.x * s,
-		u.y * s,
-		u.z * s,
 	};
 }
 
@@ -171,33 +141,40 @@ template<typename T> vect2<T> vsumvect(vect2<T> &u, vect2<T> &v) {
 	};
 }
 
-template<typename T> vect3<T> vsumvect(vect3<T> &u, vect3<T> &v) {
-	return vect3<T>{
-		u.x + v.x,
-		u.y + v.y,
-		u.z + v.z,
-	};
+template<typename T> T vdotvect(vect2<T>& u, vect2<T>& v) {
+	return (u.x * v.x) + (u.y * v.y);
 }
 
-template<typename T> vect2<T> arotvectx(vect2<T> &u, T a) {
+template<typename T>
+T vcrossvect(vect2<T>& u, vect2<T>& v) {
+	return u.x* v.y - u.y * v.x;
+}
+
+template<typename T>
+std::ostream& operator<< (std::ostream& os, vect2<T>& p) {
+	os << "vector2D < x: " << p.x << " , " << "y: " << p.y << " >" << std::endl;
+	return os;
+}
+
+template<typename T> vect2<T> arotvectx(vect2<T>& u, T a) {
 	return vect2<T>{
-		u.x * cosf(a) - u.y * sinf(a),
-		u.x * sinf(a) + u.y * cosf(a)
+		u.x* cosf(a) - u.y * sinf(a),
+			u.x* sinf(a) + u.y * cosf(a)
 	};
 }
 
-template<typename T> vect2<T> projection2d(vect3<T> &u) {
+template<typename T> vect2<T> projection2d(vect3<T>& u) {
 	return vect2<T>{
 		u.x,
-		u.y
+			u.y
 	};
 }
 
-template<typename T> float vlenght(vect2<T> &u) {
+template<typename T> float vlenght(vect2<T>& u) {
 	return sqrtf(u.x * u.x + u.y * u.y);
 }
 
-template<typename T> float distance_to_point(vect2<T> &u, vect2<T> &v) {
+template<typename T> float distance_to_point(vect2<T>& u, vect2<T>& v) {
 	float a = powf(v.x - u.x, 2.0f);
 	float b = powf(v.y - u.y, 2.0f);
 	return sqrtf(a + b);
@@ -208,6 +185,7 @@ template<typename T> void vnormalize(vect2<T>* u) {
 	u->x /= lenght;
 	u->y /= lenght;
 }
+
 
 /*
 __      __       _                   ____  _____
@@ -239,6 +217,70 @@ __      __       _                   ____  _____
 ====================================================================
 */
 
+template<typename T>
+std::ostream& operator<< (std::ostream& os, vect3<T>& p) {
+	os << "vector3D <" << p.x << "," << p.y << "," << p.z << ">" << std::endl;
+	return os;
+}
+
+
+template<typename T>
+vect3<T> operator+(const vect3<T> u, const vect3<T> v) {
+	return vect3<T>{
+		u.x + v.x,
+			u.y + v.y,
+			u.z + v.z,
+	};
+}
+
+template<typename T>
+vect3<T> operator+=(const vect3<T> u, const vect3<T> v) {
+	return vect3<T>{
+		u.x + v.x,
+			u.y + v.y,
+			u.z + v.z,
+	};
+}
+
+template<typename T>
+vect3<T> operator-=(const vect3<T> u, const vect3<T> v) {
+	return vect3<T>{
+		u.x - v.x,
+			u.y - v.y,
+			u.z - v.z,
+	};
+}
+
+template<typename T>
+vect3<T> operator*=(const vect3<T> u, const vect3<T> v) {
+	return vect3<T>{
+		u.x* v.x,
+		u.y* v.y,
+		u.z* v.z,
+	};
+}
+
+template<typename T>
+vect3<T> operator*=(const vect3<T> u, const T s) {
+	return vect3<T>{
+		u.x* s,
+		u.y* s,
+		u.z* s,
+	};
+}
+
+
+template<typename T> vect3<T> vsumvect(vect3<T>& u, vect3<T>& v) {
+	return vect3<T>{
+		u.x + v.x,
+		u.y + v.y,
+		u.z + v.z,
+	};
+}
+
+template<typename T> vect3<T> vptrclone(vect3<T>* u) {
+	return vect3<T>( u->x , u->y , u->z );
+}
 
 template<typename T> vect3<T> smultvect(vect3<T> &u, T s) {
 	return vect3<T>{
@@ -267,7 +309,7 @@ template<typename T> vect3<T> vsubvect(vect3<T> &u, vect3<T> &v) {
 	return vect3<T>{
 		u.x - v.x,
 		u.y - v.y,
-		u.z - v.z,
+		u.z - v.z
 	};
 }
 
@@ -373,6 +415,7 @@ __      __       _                   _  _   _____
 	\  /  __/ (__| || (_) | |  \__ \    | | | |__| |
 	 \/ \___|\___|\__\___/|_|  |___/    |_| |_____/
 */
+
 
 // vec4
 template<typename T> vect4<T> vec4_from_vec3(vect3<T>& u) {

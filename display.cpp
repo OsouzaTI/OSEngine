@@ -51,6 +51,14 @@ bool Display::init_window(const char* title, int width, int height, int wview_po
 		std::cout << "TTF inicializado\n";
 	}
 	
+	//Initialize PNG loading
+	int imgFlags = IMG_INIT_PNG;
+	if (!(IMG_Init(imgFlags) & imgFlags))
+	{
+		printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+		success = false;
+	}
+
 	this->window = SDL_CreateWindow(
 		this->title,
 		SDL_WINDOWPOS_CENTERED,
@@ -145,23 +153,35 @@ Camera* Display::get_camera()
 	return Display::camera;
 }
 
-void Display::create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect)
+void Display::create_camera(
+	vect3<float> position,
+	vect3<float> direction,
+	float yaw,
+	float fov_x,
+	float fov_y,
+	float znear,
+	float zfar,
+	float aspect_x,
+	float aspect_y
+)
 {
-	//float _aspect = view_port.height / (float)view_port.width;
-	//if (aspect != NULL) _aspect = aspect;
-	//this->camera = {
-	//	position,
-	//	rotate,
-	//	fov,
-	//	znear,
-	//	zfar,
-	//	_aspect
-	//};
+	Display::camera = new Camera(
+		position,
+		direction,
+		yaw,
+		fov_x,
+		fov_y,
+		znear,
+		zfar,
+		aspect_x,
+		aspect_y
+	);
 }
 
-void Display::set_camera_fov(float fov)
+void Display::set_camera_fov(float fov_x, float fov_y)
 {
-	Display::camera->fov = fov;
+	Display::camera->fov_x = fov_x;
+	Display::camera->fov_y = fov_y;
 }
 
 void Display::set_clear_color_screen(uint32_t color)

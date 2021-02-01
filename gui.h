@@ -33,7 +33,7 @@ class OSGui
 
 
         static Drawing* guidraw;
-        static OSFont global_font;
+        static OSFont* global_font;
         static OSPallet default_pallet;
 
 	private:
@@ -62,7 +62,7 @@ class OSGui
 
 Drawing* OSGui::guidraw = NULL;
 OSPallet OSGui::default_pallet;
-OSFont OSGui::global_font;
+OSFont* OSGui::global_font = NULL;
 
 vect2<int> OSGui::get_position() {
     return position;
@@ -417,14 +417,15 @@ class TextLabel : public OSGui
 {
 public:
     TextLabel();
-    TextLabel(OSFont* font, const char* text, int x, int y, int size);
+    TextLabel(const char* text, int x, int y);
     ~TextLabel();
 
     void set_position(int x, int y);
     void set_text(const char* text);    
+    void set_text_color(SDL_Color text_color);
     int get_total_width();
 
-    void GUI_init(OSFont* font, const char* text, int x, int y, int size);
+    void GUI_init(const char* text, int x, int y);
     void draw() override;
     // void poll_events() override;
     void free_resources();
@@ -432,7 +433,6 @@ private:
     int size;
     char text[100];
     int total_width;
-    OSFont* font;
     SDL_Surface* surface_label;
     SDL_Texture* message;
     SDL_Rect message_rect;
@@ -441,14 +441,13 @@ private:
 };
 
 TextLabel::TextLabel(){
-    font = NULL;
     surface_label = NULL;
     message = NULL;
 }
 
-TextLabel::TextLabel(OSFont* font, const char* text, int x, int y, int size)
+TextLabel::TextLabel(const char* text, int x, int y)
 {
-    GUI_init(font, text, x, y, size);
+    GUI_init(text, x, y);
 }
 
 TextLabel::~TextLabel(){
@@ -465,40 +464,44 @@ void TextLabel::set_text(const char* text)
     strcpy(this->text, text);
 }
 
+void TextLabel::set_text_color(SDL_Color text_color)
+{
+    this->text_color = text_color;
+}
+
 int TextLabel::get_total_width()
 {
     return total_width;
 }
 
-void TextLabel::GUI_init(OSFont* font, const char* text, int x, int y, int size)
+void TextLabel::GUI_init(const char* text, int x, int y)
 {
     strcpy(this->text, text);    
     position = {x, y};
     this->size = size;
-    this->font = font;
     display = guidraw->get_display();
     renderer = display->get_renderer();
     surface_label = NULL;
     message = NULL;
 
-    total_width = (strlen(text) * (font->get_font_size() * 0.6));
+    total_width = (strlen(text) * (OSGui::global_font->get_font_size() * 0.6));
     message_rect.x = position.x;
     message_rect.y = position.y;
     message_rect.w = total_width;
-    message_rect.h = font->get_font_size() * 1.5;
+    message_rect.h = OSGui::global_font->get_font_size() * 1.5;
 
 }
 
 void TextLabel::draw(){
     
-    surface_label = TTF_RenderText_Blended(font->get_font(), text, text_color);
+    surface_label = TTF_RenderText_Blended(OSGui::global_font->get_font(), text, text_color);
     message = SDL_CreateTextureFromSurface(renderer, surface_label);
 
-    total_width = (strlen(text) * (font->get_font_size() * 0.6));
+    total_width = (strlen(text) * (OSGui::global_font->get_font_size() * 0.6));
     message_rect.x = position.x;
     message_rect.y = position.y;
     message_rect.w = total_width;
-    message_rect.h = font->get_font_size()*1.5;
+    message_rect.h = OSGui::global_font->get_font_size()*1.5;
 
     if (SDL_RenderCopy(renderer, message, NULL, &message_rect) == -1) {
         //logerr("Erro mano");
@@ -566,14 +569,14 @@ AreaLogger::~AreaLogger(){}
 void AreaLogger::add_log(const char* text)
 {
     TextLabel label = TextLabel();
-    label.GUI_init(&OSGui::global_font, text, position.x + spacing, position.y + spacing, 16);
+    label.GUI_init(text, position.x + spacing, position.y + spacing);
     logs.push_back(label);   
 }
 
 void AreaLogger::add_log(std::string text)
 {
     TextLabel label;
-    label.GUI_init(&OSGui::global_font, text.c_str(), position.x + spacing, position.y + spacing, 16);
+    label.GUI_init(text.c_str(), position.x + spacing, position.y + spacing);
     logs.push_back(label);     
 }
 
@@ -749,8 +752,7 @@ class TextInput : public OSGui
         char numerical_controller = 'f';
         void* numerical_value;
         TextLabel label;
-        TextLabel field;
-        OSFont font;
+        TextLabel field;        
 
     protected:
         int inumerical_value = 1;
@@ -805,17 +807,16 @@ void TextInput::GUI_init(const char* text, int x, int y)
 {
     field_focus = false;
     strcpy(this->text, text);
-    position = { x, y };
-    font = OSGui::global_font;
+    position = { x, y };    
 
     offsize_x = strlen(this->text) * (font_size*0.5);
     offsize_y = (font_size*0.3);
 
-    label.GUI_init(&font, this->text, position.x, position.y, 13);
+    label.GUI_init(this->text, position.x, position.y);
     start_field_x = position.x + label.get_total_width();
     start_field_y = position.y - offsize_y;
 
-    field.GUI_init(&font, value.c_str(), start_field_x + field_padding_x, position.y, font_size);    
+    field.GUI_init(value.c_str(), start_field_x + field_padding_x, position.y);    
     total_width = label.get_total_width() + field_width;
 
 }
@@ -946,7 +947,7 @@ void TransformInput::GUI_init(const char* label, int x, int y)
 {
     transform_xyz = { 1, 1, 1 };
     position = { x, y };     
-    this->label.GUI_init(&OSGui::global_font, label, x, y, 13);
+    this->label.GUI_init(label, x, y);
     transform_x.set_value("1");
     transform_y.set_value("1");
     transform_z.set_value("1");
@@ -1015,7 +1016,7 @@ RadioButton::~RadioButton(){}
 
 void RadioButton::GUI_init(const char* label, int x, int y, bool* target, int size)
 {
-    this->label.GUI_init(&OSGui::global_font, label, x, y, 12);
+    this->label.GUI_init(label, x, y);
     int width_label = this->label.get_total_width() + offsize_button_x;
     position = { width_label + x, offsize_button_y + y };
     this->target = target;

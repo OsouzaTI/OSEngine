@@ -8,6 +8,7 @@ class Janela : public OSRenderer
 		
 		TransformInput* escala;
 		TransformInput* rotacao;		
+		TextLabel* num_triangles;
 
 		void engine_main() override;
 		void process_input() override;
@@ -18,24 +19,21 @@ class Janela : public OSRenderer
 };
 
 void Janela::engine_main() {
-	create_window("Janela", 1000, 800, IMGUI);		
-	GUI->add<TransformInput>("Teste",10, 10);	
-	//mesh.mesh.translation.y = -900;
-	//mesh.mesh.translation.z = 0;
-	mesh.load_obj_file_dataV2(
-		"F:\\Projects\\cpp\\OSRenderer\\Objects3D\\obj\\f22.obj");
-	mesh.texture.load_png_texture(
-		"F:\\Projects\\cpp\\OSRenderer\\Objects3D\\textures\\f22.png");
-	//mesh.load_cube_object();
+	create_window("Janela", 800, 800, IMGUI);		
 	create_camera(
 		{0, 0, 0},
 		{0, 0 ,1},
 		0.0f,
-		60.0f,
-		0.1f,
-		100.0f,
-		(float)window_height()/window_width()
+		60.0f,		
+		1.0f,
+		2200.0f
 	);
+
+	num_triangles = &GUI->add<TextLabel>("Teste",10, 10);
+	num_triangles->set_text_color({ 255, 0, 0 });
+	
+	pipeline.read_obj_file("F:\\Projects\\cpp\\OSRenderer\\Objects3D\\obj\\_cube.obj");
+	pipeline.load_texture("F:\\Projects\\cpp\\OSRenderer\\Objects3D\\textures\\person.png");
 
 }
 
@@ -50,14 +48,14 @@ void Janela::process_input()
 		case OS_KEYBOARD_TYPE::KEY_DOWN:
 			switch (keyboard_event_key()){			
 				case OS_KEYBOARD_KEY::BT_KEY_W: {
-					Display::camera->forward_velocity = smultvect<float>(Display::camera->direction, 5.0f * delta_time());
+					Display::camera->forward_velocity = smultvect<float>(Display::camera->direction, 1.0f * delta_time());
 					Display::camera->position = vsumvect(
 						Display::camera->position,
 						Display::camera->forward_velocity
 					);
 				}break;
 				case OS_KEYBOARD_KEY::BT_KEY_S: {
-					Display::camera->forward_velocity = smultvect<float>(Display::camera->direction, 5.0f * delta_time());
+					Display::camera->forward_velocity = smultvect<float>(Display::camera->direction, 1.0f * delta_time());
 					Display::camera->position = vsubvect(
 						Display::camera->position,
 						Display::camera->forward_velocity
@@ -86,11 +84,17 @@ void Janela::update()
 {
 	frame_rate_control();	
 	SDL_GetMouseState(&position_mouse_x, &position_mouse_y);	
-	mesh.update_mesh();
+	char buffer[100];
+	sprintf(buffer, "Numero de triangulos: %d", pipeline.get_mesh()->number_of_triangles_to_render);
+	num_triangles->set_text(buffer);
+	pipeline.process_image();
+
 }
 
 void Janela::render() {	
-	mesh.draw_mesh();
+
+	pipeline.draw_pipeline();
+
 }
 
 int main(int argv, char** args) {	

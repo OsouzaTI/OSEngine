@@ -47,19 +47,23 @@ add_executable(OSRenderer ${sources}
 "texture.h"
 "texture.cpp"
 "triangle.h"
-"triangle.cpp" "camera.h" "clipping.h" "clipping.cpp")
+"triangle.cpp" "camera.h" "clipping.h" "clipping.cpp" "polygon.h" "polygon.cpp" "graphic_pipeline.h" "graphic_pipeline.cpp")
 
 
 target_include_directories(OSRenderer PRIVATE deps/SDL2/include
                                             deps/SDL2_TTF/include        
+                                            deps/SDL2_IMAGE/include        
                                             imgui
                                             upng)
 
 target_link_directories(OSRenderer PRIVATE deps/SDL2/lib/x86  
-                                         deps/SDL2_TTF/lib)
+                                         deps/SDL2_TTF/lib
+                                         deps/SDL2_IMAGE/lib
+                                         )
 
 target_link_libraries(OSRenderer PRIVATE opengl32.lib
                                      SDL2.lib                                     
                                      SDL2main.lib
                                      SDL2_ttf.lib                                     
+                                     SDL2_image.lib                                     
 )

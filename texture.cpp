@@ -29,3 +29,11 @@ void OSTexture::load_png_texture(const char* filename)
 		std::cout << "erro in open file texture" << std::endl;
 	}
 }
+
+void OSTexture::load_png_image(const char* filename)
+{
+	SDL_Surface* surface = IMG_Load(filename);
+	mesh_texture = (uint32_t*)surface->pixels;
+	texture_width = surface->w;
+	texture_height = surface->h;
+}

@@ -2,6 +2,7 @@
 #define DISPLAY_H
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <SDL_image.h>
 #include "vector.h"
 #include "light.h"
 #include "camera.h"
@@ -73,8 +74,18 @@ class Display
 		// atualiza a tela apos as escritas
 		inline void sdl_render_present() { SDL_RenderPresent(this->renderer); };
 
-		void create_camera(vect3<float> position, vect3<float> rotate, float fov, float znear, float zfar, float aspect = NULL);
-		void set_camera_fov(float fov);
+		void create_camera(
+			vect3<float> position,
+			vect3<float> direction,
+			float yaw,
+			float fov_x,
+			float fov_y,
+			float znear,
+			float zfar,
+			float aspect_x,
+			float aspect_y
+		);
+		void set_camera_fov(float fov_x, float fov_y);
 		void set_clear_color_screen(uint32_t color);
 
 		// retorna a referencia do buffer de cor

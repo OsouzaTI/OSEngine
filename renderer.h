@@ -12,6 +12,7 @@
 #include "macros.h"
 #include "cimgui.h"
 #include "scene_controller.h"
+#include "graphic_pipeline.h"
 
 class OSRenderer
 {
@@ -25,7 +26,8 @@ class OSRenderer
 
 		SDL_Event keyboard_event;		
 		Drawing draw;		
-		Mesh mesh;		
+		GraphicPipeline pipeline;
+
 		GlobalLight* light = GlobalLight::get_instance();
 		OSGuiController* GUI = OSGuiController::get_instance();
 		OSImgui* OSIMGUI = OSImgui::get_instance();
@@ -57,9 +59,13 @@ class OSRenderer
 		void create_camera(
 			vect3<float> position,
 			vect3<float> direction,
-			float yaw,
-			float fov, float znear, float zfar, float aspect = NULL);
-		void set_camera_fov(float fov);
+			float yaw,			
+			float fov_y,
+			float znear,
+			float zfar
+		);
+
+		void set_camera_fov(float fov_x, float fov_y);
 		// Metodos que serão sobrescritos pela classe filha
 		virtual void engine_main() {}; // a cabeça do jogo
 		virtual void update() {}; // o pré draw
@@ -87,6 +93,7 @@ OSRenderer::~OSRenderer(){
 	SDL_StopTextInput();
 	SDL_DestroyRenderer(this->display.get_renderer());
 	SDL_DestroyWindow(this->display.get_window());
+	IMG_Quit();
 	TTF_Quit();
 	SDL_Quit();
 }
@@ -95,14 +102,17 @@ void OSRenderer::create_window(const char* title, int width, int height, GUI_MOD
 {
 	this->game_loop = this->display.init_window(title, width, height, width, height, mode);
 	this->display.setup_window();	
+	
+	// set the font
+	OSGui::global_font = new OSFont("F:\\Projects\\cpp\\OSRenderer\\fonts\\aAbsoluteEmpire.ttf", 14);
+	
 	draw.set_display(&display);
-	mesh.set_display(&display);
-	mesh.set_drawing(&draw);
+	pipeline.set_display(&display);
+	pipeline.set_drawing(&draw);
+
 	draw.set_light(&light->light);
 	center_screen = { width / 2.0f, height / 2.0f };
 	Shape::center_screen = &center_screen;
-	// set the font
-	OSGui::global_font = OSFont("F:\\Projects\\cpp\\OSRenderer\\fonts\\aAbsoluteEmpire.ttf", 14);
 
 	if (display.gui_mode == GUI_MODE::IMGUI) {
 		// imgui
@@ -113,7 +123,7 @@ void OSRenderer::create_window(const char* title, int width, int height, GUI_MOD
 		OSIMGUI->set_scene(SCENE->get_scene());
 		OSIMGUI->set_scene_controller(SCENE);
 		OSIMGUI->set_display(&display);
-		OSIMGUI->set_mesh(&mesh);
+		OSIMGUI->set_mesh(pipeline.get_mesh());
 		OSIMGUI->setup(); // setup imgui
 	}
 
@@ -133,9 +143,10 @@ void OSRenderer::draw_buffer()
 
 void OSRenderer::update_render()
 {	
-	SCENE->draw();
 	display.draw_buffer();
 	if (display.gui_mode == GUI_MODE::IMGUI) OSIMGUI->draw();
+	GUI->draw();
+	SCENE->draw();
 	display.sdl_render_present();
 }
 
@@ -164,11 +175,9 @@ void OSRenderer::run()
 	engine_main();
 	while (this->game_loop) {	
 		process_input();
-
 		clear_screen();
-		update();
-		draw.draw_circle(light->light.direction.x, light->light.direction.y, 10, C_RED);
-		render();
+		update();		
+		render();		
 		// update screen
 		update_render();
 	}
@@ -193,14 +202,32 @@ void OSRenderer::create_camera(
 	vect3<float> position,
 	vect3<float> direction,
 	float yaw,
-	float fov, float znear, float zfar, float aspect)
+	float fov_y,
+	float znear,
+	float zfar
+)
 {
-	Display::camera = new Camera(position, direction, yaw, fov, znear, zfar, aspect);
+
+	float aspect_x = (float)display.width / (float)display.height;
+	float aspect_y = (float)display.height / (float)display.width;
+	float _fov_y = RAD(fov_y);
+	float _fov_x = atan(tan(RAD(fov_y)/2) * aspect_x) * 2.0f;
+	display.create_camera(
+		position,
+		direction,
+		yaw,
+		_fov_x,
+		_fov_y,
+		znear,
+		zfar,
+		aspect_x,
+		aspect_y
+	);
 }
 
-void OSRenderer::set_camera_fov(float fov)
+void OSRenderer::set_camera_fov(float fov_x, float fov_y)
 {
-	this->display.set_camera_fov(fov);
+	this->display.set_camera_fov(fov_x, fov_y);
 }
 
 #endif // !OSENGINE_H

@@ -302,7 +302,8 @@ void Drawing::fill_flat_top_triangle(int x0, int y0, int x1, int y1, int x2, int
 }
 
 void Drawing::fill_triangle(int x0, int y0, int x1, int y1, int x2, int y2, color_t color) {
-    float dot_prod = TriangleHelper::back_face_culling(x0, y0, x1, y1, x2, y2);
+
+    // TODO: Back face culling implement here
 
     if (y0 > y1) {
         Math::swap(&y0, &y1);

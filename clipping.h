@@ -27,7 +27,7 @@ class FrustumPlane
 		~FrustumPlane();
 		static FrustumPlane* get_instance();
 
-		void init_frustum_planes(float fov, float znear, float zfar);
+		void init_frustum_planes(float fov_x, float fov_y, float znear, float zfar);
 		plane* get_frustum_planes();
 	private:
 		static FrustumPlane* instance;

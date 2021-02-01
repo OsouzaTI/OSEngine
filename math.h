@@ -60,6 +60,11 @@ namespace Math {
 		}
 	}
 
+	template<typename T>
+	inline T lerp(T a, T b, T factor) {
+		return a + factor * (b - a);
+	}
+
 }
 
 #endif // !OSMATH_H

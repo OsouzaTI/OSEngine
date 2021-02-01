@@ -8,29 +8,7 @@
 #include "matrix.h"
 #include "drawing.h"
 #include "texture.h"
-
-typedef struct {
-    float u;
-    float v;
-} UVtext;
-
-typedef struct {
-    int a;
-    int b;
-    int c;
-    UVtext a_uv;
-    UVtext b_uv;
-    UVtext c_uv;
-    uint32_t color;
-} face;
-
-
-typedef struct {
-    vect4<float> points[3];
-    UVtext textcoords[3];
-    uint32_t color;
-    float avg_depth;
-} triangle;
+#include "triangle.h"
 
 typedef struct
 {
@@ -52,10 +30,11 @@ class Mesh
         OSTexture texture;
         triangle* triangles_to_render;
         unsigned int number_of_triangles_to_render = 0;
+
         void load_cube_object();
-        void load_obj_file_data(char* filename);  
-        void load_obj_file_dataV2(char* filename);
-        void update_mesh();
+        void load_obj_file_data(const char* filename);  
+        void load_obj_file_dataV2(const char* filename);        
+
         void draw_mesh();
 
         void set_display(Display* display);
@@ -73,18 +52,19 @@ class Mesh
         vect3<float>* get_scale();
         vect3<float>* get_rotate();
 
-
         void set_rotate_mesh_x(float angle_x);
         void set_rotate_mesh_y(float angle_y);
         void set_rotate_mesh_z(float angle_z);
+
+        Mat4x4 shearXY_matrix;
+        Mat4x4 shearYX_matrix;
+
     private:        
         Display* display;
         Drawing* draw;
         vect3<float> cube_vertices[8];
         face cube_faces[12];
         uint32_t color = C_WHITE;
-        Mat4x4 shearXY_matrix;
-        Mat4x4 shearYX_matrix;
 };
 
 #endif

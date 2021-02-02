@@ -47,6 +47,6 @@ void Example::render() {
 
 int main(int argc, char* argv[]) {
 	Example example;
-	example.engine_main();
+	example.run();
 	return 0;
 }

@@ -1,6 +1,6 @@
 # OSEngine
 ## Dependencies
-    *[imgui](https://github.com/ocornut/imgui)*
+    -> *[imgui](https://github.com/ocornut/imgui)*
 	*[imgui_sdl](https://github.com/Tyyppi77/imgui_sdl)*
 	*upng](https://github.com/elanthis/upng)*
 	*[SDL_image](https://www.libsdl.org/projects/SDL_image/)*

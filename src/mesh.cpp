@@ -1,5 +1,5 @@
 #include "mesh.h"
-#include "math.h"
+#include "cmath.h"
 #include <iostream>
 #include "polygon.h"
 #include "triangle.h"
@@ -193,94 +193,6 @@ void Mesh::load_obj_file_dataV2(const char* filename) {
 	}
 }
 
-void Mesh::draw_mesh()
-{
-	// the number of triangles in the array triangles_to_render
-	int n_triangles = number_of_triangles_to_render;
-	for (int i = 0; i < n_triangles; i++)
-	{
-		triangle* triangle = &triangles_to_render[i];
-		if (display->draw_mode == DRAW_MODE::WIREFRAME) {
-			draw->draw_triangle(
-				triangle->points[0].x,
-				triangle->points[0].y,
-				triangle->points[1].x,
-				triangle->points[1].y,
-				triangle->points[2].x,
-				triangle->points[2].y,
-				color
-			);
-		}
-		
-		if (display->draw_mode == DRAW_MODE::FILLED) {
-			draw->draw_zbuffer_fill_triangle(
-				triangle->points[0].x,
-				triangle->points[0].y,
-				triangle->points[0].z,
-				triangle->points[0].w,
-				triangle->points[1].x,
-				triangle->points[1].y,
-				triangle->points[1].z,
-				triangle->points[1].w,
-				triangle->points[2].x,
-				triangle->points[2].y,
-				triangle->points[2].z,
-				triangle->points[2].w,
-				triangle->color
-			);
-		}
-
-		if (display->draw_mode == DRAW_MODE::TEXTURED) {
-			draw->draw_textured_triangle(
-				triangle->points[0].x, triangle->points[0].y,
-				triangle->points[0].z, triangle->points[0].w,
-				triangle->textcoords[0].u, triangle->textcoords[0].v,
-
-				triangle->points[1].x, triangle->points[1].y,
-				triangle->points[1].z, triangle->points[1].w,
-				triangle->textcoords[1].u, triangle->textcoords[1].v,
-
-				triangle->points[2].x, triangle->points[2].y,
-				triangle->points[2].z, triangle->points[2].w,
-				triangle->textcoords[2].u, triangle->textcoords[2].v,
-				&texture
-			);
-		}
-
-		if (display->draw_mode == DRAW_MODE::TEXTURED_WIREFRAME) {
-			// texture
-
-			draw->draw_textured_triangle(
-				triangle->points[0].x, triangle->points[0].y,
-				triangle->points[0].z, triangle->points[0].w,
-				triangle->textcoords[0].u, triangle->textcoords[0].v,
-
-				triangle->points[1].x, triangle->points[1].y,
-				triangle->points[1].z, triangle->points[1].w,
-				triangle->textcoords[1].u, triangle->textcoords[1].v,
-
-				triangle->points[2].x, triangle->points[2].y,
-				triangle->points[2].z, triangle->points[2].w,
-				triangle->textcoords[2].u, triangle->textcoords[2].v,
-				&texture
-			);
-
-			// wireframe
-			draw->draw_triangle(
-				triangle->points[0].x,
-				triangle->points[0].y,
-				triangle->points[1].x,
-				triangle->points[1].y,
-				triangle->points[2].x,
-				triangle->points[2].y,
-				color
-			);
-		}
-
-	}
-
-}
-
 void Mesh::set_display(Display* display)
 {
 	this->display = display;
@@ -289,11 +201,6 @@ void Mesh::set_display(Display* display)
 void Mesh::set_color(uint32_t color)
 {
 	this->color = color;
-}
-
-void Mesh::set_drawing(Drawing* drawing)
-{
-	draw = drawing;
 }
 
 uint32_t Mesh::get_color()

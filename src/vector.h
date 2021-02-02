@@ -436,4 +436,21 @@ template<typename T> vect4<T> smultvect(vect4<T> &u, T s) {
 	};
 }
 
+template<typename T> T vdotvect(vect4<T>& u, vect4<T>& v) {
+	return (u.x * v.x) + (u.y * v.y) + (u.z * v.z) + (u.w * v.w);
+}
+
+template<typename T> vect4<T> vsubvect(vect4<T>& u, vect4<T>& v) {
+	return vect4<T>{
+		u.x - v.x,
+		u.y - v.y,
+		u.z - v.z,
+		u.w - v.w
+	};
+}
+
+template<typename T> vect4<T> vptrclone(vect4<T>* u) {
+	return vect4<T>(u->x, u->y, u->z, u->w);
+}
+
 #endif // !VECTOR_H

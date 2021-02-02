@@ -4,42 +4,87 @@
 
 TriangleHelper::TriangleHelper()
 {
+    LOG("Construct the triangle helper");
 }
 
 TriangleHelper::~TriangleHelper()
 {
+    LOG("Deconstruct the triangle helper");
 }
 
 bool TriangleHelper::back_face_culling(float x0, float y0, float z0, float x1, float y1, float z1, float x2, float y2, float z2, vect3<float>* normal_outside) {
 
-    // Famoso backface
+    /*
+    ______            _   ______               _____       _ _ _
+    | ___ \          | |  |  ___|             /  __ \     | | (_)
+    | |_/ / __ _  ___| | _| |_ __ _  ___ ___  | /  \/_   _| | |_ _ __   __ _
+    | ___ \/ _` |/ __| |/ /  _/ _` |/ __/ _ \ | |   | | | | | | | '_ \ / _` |
+    | |_/ / (_| | (__|   <| || (_| | (_|  __/ | \__/\ |_| | | | | | | | (_| |
+    \____/ \__,_|\___|_|\_\_| \__,_|\___\___|  \____/\__,_|_|_|_|_| |_|\__, |
+                                                                        __/ |
+                                                                       |___/
+    */
+
+    /*
+    
+        Essa função recebe como parâmetro, os vertices do triângulo usado 
+        como objeto no teste
+
+        vertice A :
+            float x0;
+            float y0;
+            float z0;
+        vertice B :
+            float x1;
+            float y1;
+            float z1;
+        vertice C :
+            float x2;
+            float y2;
+            float z2;
+    
+        O parâmetro normal_outside é para que seja possível com apenas o calculo
+        da normal da face com a camera em questão calcular a intensidade do flat shading
+
+        
+    */
+
+
+    /* pontos em forma de vetores em R3 */
     vect3<float> vector_a(x0, y0, z0);
     vect3<float> vector_b(x1, y1, z1);
     vect3<float> vector_c(x2, y2, z2);
 
+    // calculando de fato os vetores que ligam cada vertice
     vect3<float> vector_ab = vsubvect<float>(vector_b, vector_a);
     vect3<float> vector_ac = vsubvect<float>(vector_c, vector_a);
+    // normalizando ( vetor diretor )
     vnormalize(&vector_ab);
     vnormalize(&vector_ac);
 
+    // normal dessa face
     vect3<float> normal = vcrossvect(vector_ab, vector_ac);
+    // normalizando novamente
     vnormalize(&normal);
 
-    normal_outside->x = normal.x;
-    normal_outside->y = normal.y;
-    normal_outside->z = normal.z;
+    // atribuindo o ponteiro recebido como parâmetro
+    *normal_outside = normal;
 
+    // representa a origem do sistema de coordenadas
     vect3<float> origin{ 0, 0 ,0 };
+    // disparando um raio da origem até um dos vertices
     vect3<float> camera_ray = vsubvect(origin, vector_a);
-
+    // calculando o produto escalar dos vetores para determinar o ângulo entre eles
     float dot_normal_camera = vdotvect(normal, camera_ray);
 
+    // definiindo se a face deve ser ocultada ou não
     if (dot_normal_camera < 0) {
         return true;
     }
     return false;
 }
 
+// TODO: determinar a necessidade desse metodo
 vect3<float> TriangleHelper::normal_light_direction(int x0, int y0, int x1, int y1, int x2, int y2)
 {
     vect3<float> a( x0, y0, 0 );
@@ -88,6 +133,10 @@ vect3<float> TriangleHelper::barycentric_weights(
 
 }
 
+
+/*
+    Função criada para ordenar os triângulos a serem rasterizados por ordem de profundidade
+*/
 void TriangleHelper::quick_sort_avg_depth(triangle* triangles_to_render, int inicio_vetor, int fim_vetor)
 {
     int time_old = SDL_GetTicks();
@@ -116,15 +165,10 @@ void TriangleHelper::quick_sort_avg_depth(triangle* triangles_to_render, int ini
     }
     if (i < fim_vetor) {
         quick_sort_avg_depth(triangles_to_render, i, fim_vetor);
-    }    
-    //std::cout << "Foram ordenados " << triangles_to_render.size()-1 << " triangulos em " << SDL_GetTicks() - time_old << "ms\n";
+    }        
 }
 
-void TriangleHelper::triangles_from_polygon(
-    polygon* polygon,
-    triangle* triangles,
-    int* number_of_triangles
-)
+void TriangleHelper::triangles_from_polygon(polygon* polygon, triangle* triangles, int* number_of_triangles)
 {
     for (int i = 0; i < polygon->num_vertices - 2; i++)
     {
@@ -135,6 +179,26 @@ void TriangleHelper::triangles_from_polygon(
         triangles[i].points[0] = static_cast<vect4<float>>(polygon->vertices[index0]);
         triangles[i].points[1] = static_cast<vect4<float>>(polygon->vertices[index1]);
         triangles[i].points[2] = static_cast<vect4<float>>(polygon->vertices[index2]);
+
+        triangles[i].textcoords[0] = polygon->textcoords[index0];
+        triangles[i].textcoords[1] = polygon->textcoords[index1];
+        triangles[i].textcoords[2] = polygon->textcoords[index2];
+
+    }
+    *number_of_triangles = polygon->num_vertices - 2;
+}
+
+void TriangleHelper::triangles_from_polygon(polygon4* polygon, triangle* triangles, int* number_of_triangles)
+{
+    for (int i = 0; i < polygon->num_vertices - 2; i++)
+    {
+        int index0 = 0;
+        int index1 = i + 1;
+        int index2 = i + 2;
+
+        triangles[i].points[0] = polygon->vertices[index0];
+        triangles[i].points[1] = polygon->vertices[index1];
+        triangles[i].points[2] = polygon->vertices[index2];
 
         triangles[i].textcoords[0] = polygon->textcoords[index0];
         triangles[i].textcoords[1] = polygon->textcoords[index1];

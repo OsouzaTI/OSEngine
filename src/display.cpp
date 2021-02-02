@@ -39,27 +39,25 @@ bool Display::init_window(const char* title, int width, int height, int wview_po
 	bool success = true;
 
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0) {
-		std::cout << "Erro na inicialização do SDL\n";
+		LOG("inicialization error of SDL");
 		success = false;
-	}
+	}else{ LOG("SDL started"); }
 
 	if (TTF_Init() == -1) {
-		std::cout << "Erro na inicialização do TTF_init\n";
+		LOG("inicialization error of SDL tff");
 		success = false;
 	}
-	else {
-		std::cout << "TTF inicializado\n";
-	}
+	else { LOG("SDL_ttf started"); }
 	
 	//Initialize PNG loading
 	int imgFlags = IMG_INIT_PNG;
 	if (!(IMG_Init(imgFlags) & imgFlags))
 	{
-		printf("SDL_image could not initialize! SDL_image Error: %s\n", IMG_GetError());
+		LOGERR("inicialization error of SDL image", IMG_GetError());
 		success = false;
-	}
+	}else{ LOG("SDL_image started"); }
 
-	this->window = SDL_CreateWindow(
+	window = SDL_CreateWindow(
 		this->title,
 		SDL_WINDOWPOS_CENTERED,
 		SDL_WINDOWPOS_CENTERED,
@@ -69,15 +67,21 @@ bool Display::init_window(const char* title, int width, int height, int wview_po
 	);
 
 	if (this->window == NULL) {
-		std::cout << "Erro na criação da janela\n";
+		LOG("inicialization error in window");
 		success = false;
 	}
+	else { LOG("window started"); }
 
-	this->renderer = SDL_CreateRenderer(this->window, -1, 0);		
+	this->renderer = SDL_CreateRenderer(this->window, -1, SDL_RENDERER_ACCELERATED);
 
 	if (this->renderer == NULL) {
-		std::cout << "Erro na criação do renderer\n";
+		LOG("inicialization error in renderer");
 		success = false;
+	}
+	else { LOG("renderer started"); }
+
+	if (success) {
+		LOG("all the operations result in success");
 	}
 
 	return success;
@@ -85,13 +89,14 @@ bool Display::init_window(const char* title, int width, int height, int wview_po
 
 void Display::setup_window()
 {
-	this->color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * view_port.width * view_port.height);
-	this->z_buffer	   = (float*)malloc(sizeof(float) * view_port.width * view_port.height);
-	if (color_buffer == NULL && z_buffer != NULL) {
-		std::cout << "Error in memory" << std::endl;		
-	}
+	color_buffer = (uint32_t*)malloc(sizeof(uint32_t) * view_port.width * view_port.height);
+	z_buffer	   = (float*)malloc(sizeof(float) * view_port.width * view_port.height);
 
-	this->texture_buffer = SDL_CreateTexture(
+	if (color_buffer == NULL && z_buffer != NULL) {
+		LOG("error in alocated dinamically memory for color_buffer or z_buffer");		
+	}else{ LOG("Buffer color/z allocated"); }
+
+	texture_buffer = SDL_CreateTexture(
 		this->renderer,
 		SDL_PIXELFORMAT_RGBA32,
 		SDL_TEXTUREACCESS_TARGET,

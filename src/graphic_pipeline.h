@@ -15,12 +15,12 @@ class GraphicPipeline
 		void read_obj_file(const char* filename);
 		void load_texture(const char* filename);
 
-		void object_space();
-		void world_space();
 
-		void process_image();
+
+		void process_image();	
+		void process_image2();	
+
 		void draw_pipeline();
-		void reset_matrix();
 
 		// getters and setter
 		void set_display(Display* display);
@@ -36,6 +36,7 @@ class GraphicPipeline
 
 		//helpers
 		uint32_t flat_shading(vect3<float> normal, uint32_t old_color);
+		uint32_t smooth_shading(vect3<float> normal, uint32_t old_color);
 
 		// functions do not use more
 		void painters_algorithm();

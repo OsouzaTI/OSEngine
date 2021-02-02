@@ -7,7 +7,7 @@
 #include "drawing.h"
 #include "mouse.h"
 #include "keyboard.h"
-#include "math.h"
+#include "cmath.h"
 #include "color.h"
 #include "font.h"
 

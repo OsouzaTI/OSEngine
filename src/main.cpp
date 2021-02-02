@@ -24,16 +24,16 @@ void Janela::engine_main() {
 		{0, 0, 0},
 		{0, 0 ,1},
 		0.0f,
-		60.0f,		
+		100.0f,		
 		1.0f,
-		2200.0f
+		200.0f
 	);
 
 	num_triangles = &GUI->add<TextLabel>("Teste",10, 10);
 	num_triangles->set_text_color({ 255, 0, 0 });
 	
 	pipeline.read_obj_file("F:\\Projects\\cpp\\OSRenderer\\Objects3D\\obj\\_cube.obj");
-	pipeline.load_texture("F:\\Projects\\cpp\\OSRenderer\\Objects3D\\textures\\person.png");
+	pipeline.load_texture("F:\\Projects\\cpp\\OSRenderer\\Objects3D\\textures\\cube.png");
 
 }
 
@@ -86,8 +86,8 @@ void Janela::update()
 	SDL_GetMouseState(&position_mouse_x, &position_mouse_y);	
 	char buffer[100];
 	sprintf(buffer, "Numero de triangulos: %d", pipeline.get_mesh()->number_of_triangles_to_render);
-	num_triangles->set_text(buffer);
-	pipeline.process_image();
+	num_triangles->set_text(buffer);	
+	pipeline.process_image2();
 
 }
 

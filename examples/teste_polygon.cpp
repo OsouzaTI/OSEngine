@@ -1,4 +1,4 @@
-#include "os_engine.hpp"
+#include "renderer.h"
 
 class Example : public OSRenderer
 {
@@ -17,7 +17,7 @@ private:
 
 void Example::engine_main()
 {
-	create_window("Example window", 400, 400);
+	create_window("Example window", 400, 400, NONGUI);
 	while (game_loop) {
 		process_input();
 		update();

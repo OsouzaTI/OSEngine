@@ -35,11 +35,8 @@ class Mesh
         void load_obj_file_data(const char* filename);  
         void load_obj_file_dataV2(const char* filename);        
 
-        void draw_mesh();
-
         void set_display(Display* display);
         void set_color(uint32_t color);
-        void set_drawing(Drawing* drawing);
         uint32_t get_color();
 
         void set_translation(vect3<float> translation);
@@ -61,7 +58,6 @@ class Mesh
 
     private:        
         Display* display;
-        Drawing* draw;
         vect3<float> cube_vertices[8];
         face cube_faces[12];
         uint32_t color = C_WHITE;

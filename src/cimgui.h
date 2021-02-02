@@ -147,7 +147,7 @@ void OSImgui::sideright_menu()
     ImGui::Checkbox("Z:", &animation_controller[2]);    
     ImGui::Separator();
     ImGui::Text("Transform Scale");
-    ImGui::SliderFloat3("Scale", transform_scale, 0, 2000);
+    ImGui::SliderFloat3("Scale", transform_scale, 0, 10000);
     ImGui::Separator();
     ImGui::Text("Transform Rotation");
     ImGui::SliderFloat3("Rotate", transform_rotate, -PI, PI);

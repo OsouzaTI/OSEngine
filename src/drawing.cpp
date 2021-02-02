@@ -1,6 +1,6 @@
 #include <iostream>
 #include "drawing.h"
-#include "math.h"
+#include "cmath.h"
 #include "triangle.h"
 
 #include "texture.h"
@@ -35,9 +35,9 @@ void Drawing::set_light(Light* light)
 
 void Drawing::draw_pixel(int x, int y, color_t color)
 {
-    if (x >= 0 && x < this->display->view_port.width && y >= 0 && y < this->display->view_port.height) {
-        color_t* color_buffer = this->display->get_color_buffer();
-        color_buffer[pixel(x, y)] = color;
+    if (x >= 0 && x < this->display->view_port.width && y >= 0 && y < this->display->view_port.height) {    
+    color_t* color_buffer = this->display->get_color_buffer();
+    color_buffer[pixel(x, y)] = color;
     }
 }
 

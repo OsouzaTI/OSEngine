@@ -35,6 +35,7 @@ public:
 	static vect3<float> barycentric_weights(int x, int y, int x0, int y0, int x1, int y1, int x2, int y2);
 	static void quick_sort_avg_depth(triangle* triangles_to_render, int inicio_vetor, int fim_vetor);
     static void triangles_from_polygon(polygon* polygon, triangle* triangles, int* number_of_triangles);
+    static void triangles_from_polygon(polygon4* polygon, triangle* triangles, int* number_of_triangles);
 private:
 
 };

@@ -32,8 +32,8 @@ void Janela::engine_main() {
 	num_triangles = &GUI->add<TextLabel>("Teste",10, 10);
 	num_triangles->set_text_color({ 255, 0, 0 });
 	
-	pipeline.read_obj_file("F:\\Projects\\cpp\\OSRenderer\\Objects3D\\obj\\_cube.obj");
-	pipeline.load_texture("F:\\Projects\\cpp\\OSRenderer\\Objects3D\\textures\\cube.png");
+	pipeline.read_obj_file("F:\\Projects\\cpp\\OSRenderer\\Objects3D\\obj\\f22.obj");
+	pipeline.load_texture("F:\\Projects\\cpp\\OSRenderer\\Objects3D\\textures\\f22.png");
 
 }
 
@@ -87,7 +87,7 @@ void Janela::update()
 	char buffer[100];
 	sprintf(buffer, "Numero de triangulos: %d", pipeline.get_mesh()->number_of_triangles_to_render);
 	num_triangles->set_text(buffer);	
-	pipeline.process_image2();
+	pipeline.process_image();
 
 }
 

@@ -26,6 +26,9 @@ class Mesh
         ~Mesh();
         bool loaded;
 
+        DRAW_MODE draw_mode = DRAW_MODE::WIREFRAME;
+        SHADING_TYPE shading_type = SHADING_TYPE::DISABLED;
+
         mesh_t mesh;
         OSTexture texture;
         triangle* triangles_to_render;

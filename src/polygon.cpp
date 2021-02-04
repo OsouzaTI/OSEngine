@@ -44,7 +44,7 @@ void PolygonHelper::clip_polygon_against_plane(polygon* polygon,FrustumPlane* fr
 		current_dot = vdotvect<float>(vsubvect(*current_vertex, plane_point), plane_normal);
 		if (current_dot * previous_dot < 0) {
 			float t_factor = previous_dot / (previous_dot - current_dot);
-			LOG("t-factor: " << t_factor);
+
 			vect3<float> intersection_point{
 				Math::lerp<float>(previous_vertex->x, current_vertex->x, t_factor),
 				Math::lerp<float>(previous_vertex->y, current_vertex->y, t_factor),

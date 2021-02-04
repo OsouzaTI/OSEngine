@@ -16,7 +16,7 @@ enum COLORS {
 	C_GREEN = 0xFF00FF00, // green color hex
 	C_BLUE = 0xFF0000FF, // blue color hex
 	C_BLUE_CLEAN = 0x9ac5db, // blue color hex
-	C_YELLOW = 0xFFFFFF00, // yellow color hex
+	C_YELLOW = 0xFFFF0000, // yellow color hex
 	C_PINK_CLEAN = 0xFFF00640, // yellow color hex
 	C_PINK = 0xd61195, // pink color hex
 	C_IMAGINARY_AXIOS = 0xFFFAB18E, // white 100-alpha,

@@ -12,6 +12,15 @@
 
 [SDL2](https://www.libsdl.org/).
 
+## Images
+
+### Cube with texture	
+<img src="images/img-1.png"></img>
+
+### Multiples meshes
+<img src="images/gif-1.gif"></img>
+
+
 ## Usage
     First import the renderer.h library, then inherit that class in your master class
 

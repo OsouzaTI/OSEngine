@@ -5,6 +5,7 @@
 #include "vector.h"
 #include "texture.h"
 #include "triangle.h"
+#include <map>
 
 class GraphicPipeline
 {
@@ -12,8 +13,8 @@ class GraphicPipeline
 		GraphicPipeline();
 		~GraphicPipeline();
 
-		void read_obj_file(const char* filename);
-		void load_texture(const char* filename);
+		void read_obj_file(std::string name, const char* filepath);
+		void load_texture(const char* name, const char* filename);
 
 
 
@@ -26,13 +27,14 @@ class GraphicPipeline
 		void set_display(Display* display);
 		void set_drawing(Drawing* draw);
 
-		Mesh* get_mesh();
+		Mesh* get_mesh(const char* name);
 
 	private:
 		Display* display;
 		Drawing* draw;
 
-		Mesh _mesh;
+		std::map<std::string, int> meshmap;
+		std::vector<Mesh> meshs;
 
 		//helpers
 		uint32_t flat_shading(vect3<float> normal, uint32_t old_color);

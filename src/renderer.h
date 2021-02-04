@@ -123,7 +123,7 @@ void OSRenderer::create_window(const char* title, int width, int height, GUI_MOD
 		OSIMGUI->set_scene(SCENE->get_scene());
 		OSIMGUI->set_scene_controller(SCENE);
 		OSIMGUI->set_display(&display);
-		OSIMGUI->set_mesh(pipeline.get_mesh());
+		OSIMGUI->set_mesh(pipeline.get_mesh("nave"));
 		OSIMGUI->setup(); // setup imgui
 	}
 

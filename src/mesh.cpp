@@ -186,7 +186,7 @@ void Mesh::load_obj_file_dataV2(const char* filename) {
 				texcoords[texture_indices[0] - 1],
 				texcoords[texture_indices[1] - 1],
 				texcoords[texture_indices[2] - 1],
-				0xFFFFFFFF
+				color
 			};
 			mesh.faces.push_back(face);
 		}

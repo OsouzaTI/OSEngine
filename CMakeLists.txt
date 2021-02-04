@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 project(OSRenderer)
 
 set(sources
-    "examples/teste_polygon.cpp"
+    "examples/space_shooter.cpp"
     "deps/imgui/imconfig.h"
     "deps/imgui/imgui.cpp"
     "deps/imgui/imgui.h"

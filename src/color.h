@@ -9,10 +9,12 @@ static SDL_Color CS_GREEN = { 0, 255, 0 };
 
 typedef uint32_t color_t;
 
+// TODO: Change colors for new type RGBA (now is ARGB)
+
 enum COLORS {
 	C_WHITE = 0xFFFFFFFF, // white color hex
 	C_BLACK = 0xFF000000, // black color hex
-	C_RED = 0xFFFF0000, // red color hex
+	C_RED = 0xFF0000FF, // red color hex
 	C_GREEN = 0xFF00FF00, // green color hex
 	C_BLUE = 0xFF0000FF, // blue color hex
 	C_BLUE_CLEAN = 0x9ac5db, // blue color hex

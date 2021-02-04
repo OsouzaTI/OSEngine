@@ -46,11 +46,16 @@ private:
 void Example::engine_main()
 {
 	create_window("Example window", 400, 400, NONGUI);
-	while (game_loop) {
-		process_input();
-		update();
-		render();
-	}
+	// default camera
+	create_camera(
+		{ 0, 0, 0 }, // position
+		{ 0, 0 ,1 }, //direction
+		0.0f, // yaw rotation
+		60.0f, // FOV
+		1.0f, // NEAR
+		100.0f // FAR
+	);
+
 }
 
 void Example::process_input()
@@ -68,9 +73,8 @@ void Example::update()
 }
 
 void Example::render() {
-	clear_screen();
 	// code
-	update_render();
+	draw.draw_circle(10, 10, 100, C_RED);
 }
 
 int main(int argc, char* argv[]) {
